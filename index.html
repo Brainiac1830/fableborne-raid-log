@@ -575,9 +575,7 @@ function renderList(){
   var q = searchInput.value.trim().toLowerCase();
   var list = players.filter(function(p){ return p.username.toLowerCase().indexOf(q) !== -1; });
   list = list.slice().sort(function(a,b){
-    var kd = (b.kingdomPower||0) - (a.kingdomPower||0);
-    if (kd !== 0) return kd;
-    return a.username.localeCompare(b.username);
+    return a.username.localeCompare(b.username, undefined, {sensitivity:'base'});
   });
   resultsCount.textContent = list.length + (list.length===1 ? ' base' : ' bases');
   resultsList.innerHTML = '';
