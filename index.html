@@ -12,6 +12,9 @@
 :root{
   --gold-1:#FFDC30; --gold-2:#F9B41A; --gold-3:#E97500;
   --blue-light:#e1f6ff; --blue-mid:#b3cff2;
+  --purple-1:#7B36C9; --purple-2:#4F1691;
+  --navy-1:#003671; --navy-2:#00214E;
+  --red-1:#ef5b5b; --red-2:#a52424;
   --gray-1:#aab7cf;
   --panel: rgba(6,26,54,0.6);
   --panel-border: rgba(255,255,255,0.18);
@@ -34,9 +37,10 @@ body{
   min-height:100vh;
   font-size:14px;
 }
-#app-root{position:relative;z-index:1;max-width:920px;margin:0 auto;padding:28px 16px 80px;}
+button{font-family:inherit;}
+#app-root{position:relative;z-index:1;max-width:920px;margin:0 auto;padding:28px 16px 100px;}
 
-header.title-block{text-align:center;margin-bottom:22px;}
+header.title-block{text-align:center;margin-bottom:14px;position:relative;}
 h1.brand-title{
   font-weight:800;font-size:clamp(26px,6vw,42px);margin:0 0 6px;letter-spacing:0.5px;line-height:1.1;
   background:linear-gradient(180deg, var(--gold-1), var(--gold-2) 55%, var(--gold-3));
@@ -46,6 +50,9 @@ h1.brand-title{
 }
 .subtitle{margin:0;font-weight:600;color:var(--blue-light);opacity:0.85;font-size:13px;}
 
+.auth-bar{display:flex;justify-content:center;align-items:center;gap:10px;margin:10px 0 18px;font-size:12.5px;font-weight:600;color:var(--blue-mid);flex-wrap:wrap;}
+.auth-bar .link-btn{background:none;border:none;color:var(--gold-1);font-weight:700;cursor:pointer;font-family:inherit;font-size:12.5px;padding:0;text-decoration:underline;}
+
 .search-wrap{display:flex;gap:10px;align-items:center;background:var(--panel);border:1px solid var(--panel-border);border-radius:16px;padding:10px 14px;box-shadow:0 4px 0 rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.08);margin-bottom:12px;}
 .search-wrap svg{flex:none;color:var(--blue-mid);}
 #search-input{flex:1;background:transparent;border:none;outline:none;color:#fff;font-family:var(--font);font-size:16px;font-weight:600;}
@@ -53,6 +60,19 @@ h1.brand-title{
 
 .toolbar{display:flex;justify-content:flex-end;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
 #results-count{font-weight:600;font-size:13px;color:var(--blue-mid);}
+
+.btn{border:none;border-radius:12px;padding:10px 18px;font-weight:700;font-size:14px;color:#fff;cursor:pointer;text-shadow:0 1px 2px rgba(0,0,0,0.35);box-shadow:0 3px 0 rgba(0,0,0,0.35);}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,0.35);}
+.btn-gold{background:linear-gradient(180deg,var(--gold-1),var(--gold-2) 55%,var(--gold-3));color:#4a2600;text-shadow:0 1px 0 rgba(255,255,255,0.35);box-shadow:0 3px 0 #8a4400;}
+.btn-gold:active{box-shadow:0 1px 0 #8a4400;}
+.btn-purple{background:linear-gradient(180deg,var(--purple-1),var(--purple-2));box-shadow:0 3px 0 #33105f;}
+.btn-purple:active{box-shadow:0 1px 0 #33105f;}
+.btn-navy{background:linear-gradient(180deg,var(--navy-1),var(--navy-2));box-shadow:0 3px 0 #001231;}
+.btn-navy:active{box-shadow:0 1px 0 #001231;}
+.btn-danger{background:linear-gradient(180deg,var(--red-1),var(--red-2));box-shadow:0 3px 0 #6a1616;}
+.btn-danger:active{box-shadow:0 1px 0 #6a1616;}
+.btn-sm{padding:7px 12px;font-size:12.5px;border-radius:10px;}
+.btn[disabled]{opacity:0.5;cursor:not-allowed;}
 
 #results-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;}
 .player-card{display:flex;flex-direction:column;text-align:left;background:var(--panel);border:1px solid var(--panel-border);border-radius:16px;padding:0;overflow:hidden;cursor:pointer;color:inherit;box-shadow:0 4px 0 rgba(0,0,0,0.25);font-family:inherit;}
@@ -68,6 +88,11 @@ h1.brand-title{
 .pc-kp svg{color:var(--gold-2);}
 
 #empty-state{text-align:center;padding:40px 20px;color:var(--blue-mid);font-weight:600;}
+#seed-row{text-align:center;margin-bottom:16px;}
+
+.fab-wrap{position:fixed;right:20px;bottom:20px;z-index:20;}
+
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:rgba(0,0,0,0.85);color:#fff;padding:10px 18px;border-radius:12px;font-weight:600;font-size:13px;z-index:100;box-shadow:0 4px 12px rgba(0,0,0,0.4);}
 
 .overlay{position:fixed;inset:0;background:rgba(3,12,28,0.72);backdrop-filter:blur(2px);display:flex;align-items:flex-start;justify-content:center;padding:24px 12px;overflow-y:auto;z-index:50;}
 .modal-card{background:linear-gradient(180deg, rgba(15,45,86,0.98), rgba(6,24,50,0.98));border:1px solid var(--panel-border);border-radius:20px;max-width:640px;width:100%;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,0.5);}
@@ -87,8 +112,24 @@ h1.brand-title{
 .no-media{padding:26px 14px;text-align:center;color:var(--gray-1);font-weight:700;background:rgba(0,0,0,0.2);border:1px dashed var(--panel-border);border-radius:14px;}
 .video-frame{position:relative;padding-top:56.25%;border-radius:14px;overflow:hidden;border:1px solid var(--panel-border);background:#000;}
 .video-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}
-.notes-text{white-space:pre-wrap;background:rgba(255,255,255,0.06);border:1px solid var(--panel-border);border-radius:12px;color:#fff;padding:10px 12px;font-family:var(--font);font-size:14px;font-weight:500;min-height:24px;}
+.notes-box{width:100%;min-height:90px;resize:vertical;background:rgba(255,255,255,0.06);border:1px solid var(--panel-border);border-radius:12px;color:#fff;padding:10px 12px;font-family:var(--font);font-size:14px;font-weight:500;}
+.notes-box[readonly]{opacity:0.85;}
+.detail-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;}
 .updated-note{margin-top:10px;font-size:11.5px;color:var(--gray-1);}
+
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:12.5px;font-weight:700;color:var(--blue-mid);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.4px;}
+.field input[type=text],.field input[type=email],.field input[type=password],.field input[type=number],.field input[type=url],.field select,.field textarea{width:100%;background:rgba(255,255,255,0.07);border:1px solid var(--panel-border);border-radius:10px;color:#fff;padding:9px 12px;font-family:var(--font);font-size:14px;font-weight:500;outline:none;}
+.field select option{background:#0a2647;color:#fff;}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--gold-2);}
+.field textarea{min-height:70px;resize:vertical;}
+.field-hint{font-size:11.5px;color:var(--gray-1);margin-top:4px;}
+.or-sep{font-size:11px;font-weight:700;color:var(--gray-1);margin:8px 0;text-align:center;}
+.file-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.thumb-preview{width:64px;height:44px;border-radius:8px;overflow:hidden;background:rgba(0,0,0,0.3);flex:none;display:flex;align-items:center;justify-content:center;}
+.thumb-preview img{width:100%;height:100%;object-fit:cover;}
+.form-error{color:#ffb3b3;font-weight:700;font-size:13px;margin-bottom:10px;}
+.form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:6px;flex-wrap:wrap;}
 
 @media (max-width:520px){
   .overlay{padding:0;}
@@ -102,6 +143,9 @@ h1.brand-title{
     <h1 class="brand-title">FABLEBORNE RAID LOG</h1>
     <p class="subtitle">Find a base. Plan the raid.</p>
   </header>
+  <div class="auth-bar" id="auth-bar">
+    <button type="button" class="link-btn" id="signin-open-btn">Guild lead sign in</button>
+  </div>
   <div class="search-wrap">
     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
     <input id="search-input" type="text" placeholder="Search player username...">
@@ -109,8 +153,14 @@ h1.brand-title{
   <div class="toolbar">
     <span id="results-count"></span>
   </div>
+  <div id="seed-row" hidden>
+    <button type="button" class="btn btn-navy btn-sm" id="seed-btn">Seed initial roster (one-time)</button>
+  </div>
   <div id="results-list"></div>
   <div id="empty-state" hidden>No players match your search yet.</div>
+  <div class="fab-wrap" id="fab-wrap" hidden>
+    <button type="button" class="btn btn-gold" id="add-player-btn">+ Add Player</button>
+  </div>
 </div>
 
 <div class="overlay" id="detail-overlay" hidden>
@@ -137,18 +187,112 @@ h1.brand-title{
     </div>
     <div class="media-block">
       <div class="media-label">Notes</div>
-      <div class="notes-text" id="detail-notes"></div>
+      <textarea class="notes-box" id="detail-notes" readonly></textarea>
+      <div class="detail-actions" id="notes-save-row" hidden><button type="button" class="btn btn-gold btn-sm" id="detail-notes-save-btn">Save Notes</button></div>
     </div>
     <div id="detail-updated" class="updated-note"></div>
+    <div class="detail-actions" id="detail-owner-actions" hidden>
+      <button type="button" class="btn btn-purple btn-sm" id="detail-edit-btn">Edit Entry</button>
+      <button type="button" class="btn btn-danger btn-sm" id="detail-delete-btn">Delete</button>
+    </div>
   </div>
 </div>
 
-<script>
-(function(){
-'use strict';
-var SHIELD_ICON = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M12 2l7 2.6v5.6c0 5-3 8.7-7 11-4-2.3-7-6-7-11V4.6L12 2z" fill="currentColor"/></svg>';
-var DIFF_COLORS = {easy:'#4be89a', medium:'#F9B41A', hard:'#ef5b5b'};
-var DIFF_LABELS = {easy:'Easy', medium:'Medium', hard:'Hard'};
+<div class="overlay" id="editor-overlay" hidden>
+  <div class="modal-card">
+    <div class="modal-head">
+      <h2 id="editor-title">Add Player</h2>
+      <button type="button" class="icon-btn" id="editor-close-btn">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg>
+      </button>
+    </div>
+    <div class="form-error" id="f-error" hidden></div>
+    <form id="editor-form">
+      <div class="field"><label>Username</label><input type="text" id="f-username" autocomplete="off"></div>
+      <div class="field"><label>Kingdom Power (trophies)</label><input type="number" id="f-kp" min="0" step="1"></div>
+      <div class="field"><label>Difficulty</label>
+        <select id="f-difficulty">
+          <option value="">Not set</option>
+          <option value="easy">Easy</option>
+          <option value="medium">Medium</option>
+          <option value="hard">Hard</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Base Screenshot</label>
+        <input type="url" id="f-screenshot-url" placeholder="Paste an image link (Discord, Imgur, etc.)">
+        <div class="or-sep">&mdash; or &mdash;</div>
+        <div class="file-row">
+          <input type="file" id="f-screenshot-file" accept="image/*">
+          <div class="thumb-preview" id="f-screenshot-preview" hidden></div>
+        </div>
+        <div class="field-hint">Uploaded images are resized automatically to keep the page fast.</div>
+      </div>
+      <div class="field"><label>YouTube Link (optional)</label><input type="url" id="f-youtube" placeholder="https://youtu.be/..."></div>
+      <div class="field"><label>Notes</label><textarea id="f-notes" placeholder="Defenses, timing, squad comp..."></textarea></div>
+    </form>
+    <div class="form-actions">
+      <button type="button" class="btn btn-navy btn-sm" id="f-cancel-btn">Cancel</button>
+      <button type="button" class="btn btn-gold btn-sm" id="f-save-btn">Save Player</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="login-overlay" hidden>
+  <div class="modal-card" style="max-width:360px;">
+    <div class="modal-head">
+      <h2>Guild Lead Sign In</h2>
+      <button type="button" class="icon-btn" id="login-close-btn">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg>
+      </button>
+    </div>
+    <div class="form-error" id="login-error" hidden></div>
+    <form id="login-form">
+      <div class="field"><label>Email</label><input type="email" id="login-email" autocomplete="username"></div>
+      <div class="field"><label>Password</label><input type="password" id="login-password" autocomplete="current-password"></div>
+    </form>
+    <div class="form-actions">
+      <button type="button" class="btn btn-navy btn-sm" id="login-cancel-btn">Cancel</button>
+      <button type="button" class="btn btn-gold btn-sm" id="login-submit-btn">Sign In</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" hidden></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+import {
+  getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut
+} from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
+import {
+  getFirestore, collection, doc, onSnapshot, setDoc, updateDoc, deleteDoc, getDocs
+} from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDReR5Vo1ieVYXfkkjQGXdGxk9xeU-uuDQ",
+  authDomain: "fableborne-raid-log.firebaseapp.com",
+  projectId: "fableborne-raid-log",
+  storageBucket: "fableborne-raid-log.firebasestorage.app",
+  messagingSenderId: "358733118697",
+  appId: "1:358733118697:web:f9f8abe69a6fc91aae0478"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const playersCol = collection(db, 'players');
+
+const SEED_PLAYERS = [
+  { id: 'petrosky', username: 'Petrosky', kingdomPower: 225, difficulty: 'medium', screenshot: 'images/petrosky.jpg', youtube: '', notes: '', updatedAt: '2026-09-07' },
+  { id: 'babrichi', username: 'Babrichi', kingdomPower: null, difficulty: 'medium', screenshot: '', youtube: 'https://youtu.be/72tbW5y6vzE', notes: '', updatedAt: '2026-09-07' },
+  { id: 'nihaly5', username: 'nihaly5', kingdomPower: 250, difficulty: 'easy', screenshot: '', youtube: 'https://youtu.be/QQ1npse0t5Q', notes: '', updatedAt: '2026-09-07' },
+  { id: 'herbetth', username: 'herbetth', kingdomPower: 225, difficulty: 'medium', screenshot: '', youtube: 'https://youtu.be/LqJiKrLVDK8', notes: '', updatedAt: '2026-09-07' }
+];
+
+const SHIELD_ICON = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M12 2l7 2.6v5.6c0 5-3 8.7-7 11-4-2.3-7-6-7-11V4.6L12 2z" fill="currentColor"/></svg>';
+const DIFF_COLORS = {easy:'#4be89a', medium:'#F9B41A', hard:'#ef5b5b'};
+const DIFF_LABELS = {easy:'Easy', medium:'Medium', hard:'Hard'};
 function diffIcon(diff){
   if (!diff || !DIFF_COLORS[diff]) return '';
   var label = DIFF_LABELS[diff] + ' base';
@@ -157,25 +301,67 @@ function diffIcon(diff){
   '</span>';
 }
 
-var players = [];
-var searchInput = document.getElementById('search-input');
-var resultsList = document.getElementById('results-list');
-var resultsCount = document.getElementById('results-count');
-var emptyState = document.getElementById('empty-state');
+let players = [];
+let isSignedIn = false;
+let editingId = null;
+let pendingScreenshotDataUrl = null;
+let toastTimer = null;
 
-var detailOverlay = document.getElementById('detail-overlay');
-var detailUsername = document.getElementById('detail-username');
-var detailKpValue = document.getElementById('detail-kp-value');
-var detailScreenshotWrap = document.getElementById('detail-screenshot-wrap');
-var detailVideoWrap = document.getElementById('detail-video-wrap');
-var detailNotes = document.getElementById('detail-notes');
-var detailUpdated = document.getElementById('detail-updated');
-var detailCloseBtn = document.getElementById('detail-close-btn');
+const searchInput = document.getElementById('search-input');
+const resultsList = document.getElementById('results-list');
+const resultsCount = document.getElementById('results-count');
+const emptyState = document.getElementById('empty-state');
+const seedRow = document.getElementById('seed-row');
+const seedBtn = document.getElementById('seed-btn');
+const fabWrap = document.getElementById('fab-wrap');
+const addPlayerBtn = document.getElementById('add-player-btn');
+const authBar = document.getElementById('auth-bar');
+const signinOpenBtn = document.getElementById('signin-open-btn');
+
+const detailOverlay = document.getElementById('detail-overlay');
+const detailUsername = document.getElementById('detail-username');
+const detailKpValue = document.getElementById('detail-kp-value');
+const detailScreenshotWrap = document.getElementById('detail-screenshot-wrap');
+const detailVideoWrap = document.getElementById('detail-video-wrap');
+const detailNotes = document.getElementById('detail-notes');
+const notesSaveRow = document.getElementById('notes-save-row');
+const detailNotesSaveBtn = document.getElementById('detail-notes-save-btn');
+const detailUpdated = document.getElementById('detail-updated');
+const detailOwnerActions = document.getElementById('detail-owner-actions');
+const detailEditBtn = document.getElementById('detail-edit-btn');
+const detailDeleteBtn = document.getElementById('detail-delete-btn');
+const detailCloseBtn = document.getElementById('detail-close-btn');
+
+const editorOverlay = document.getElementById('editor-overlay');
+const editorTitle = document.getElementById('editor-title');
+const editorCloseBtn = document.getElementById('editor-close-btn');
+const fUsername = document.getElementById('f-username');
+const fKp = document.getElementById('f-kp');
+const fDifficulty = document.getElementById('f-difficulty');
+const fScreenshotUrl = document.getElementById('f-screenshot-url');
+const fScreenshotFile = document.getElementById('f-screenshot-file');
+const fScreenshotPreview = document.getElementById('f-screenshot-preview');
+const fYoutube = document.getElementById('f-youtube');
+const fNotes = document.getElementById('f-notes');
+const fError = document.getElementById('f-error');
+const fCancelBtn = document.getElementById('f-cancel-btn');
+const fSaveBtn = document.getElementById('f-save-btn');
+
+const loginOverlay = document.getElementById('login-overlay');
+const loginCloseBtn = document.getElementById('login-close-btn');
+const loginCancelBtn = document.getElementById('login-cancel-btn');
+const loginSubmitBtn = document.getElementById('login-submit-btn');
+const loginEmail = document.getElementById('login-email');
+const loginPassword = document.getElementById('login-password');
+const loginError = document.getElementById('login-error');
 
 function escapeHtml(str){
   return String(str==null?'':str).replace(/[&<>"']/g, function(s){
     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s];
   });
+}
+function slugify(name){
+  return String(name).trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-+|-+$)/g,'') || ('player-' + Date.now());
 }
 function youtubeEmbedUrl(url){
   if(!url) return null;
@@ -193,6 +379,36 @@ function youtubeEmbedUrl(url){
     return id ? ('https://www.youtube.com/embed/' + id) : null;
   } catch(e){ return null; }
 }
+function showToast(msg){
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.hidden = false;
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ t.hidden = true; }, 3200);
+}
+
+function updateAuthUI(user){
+  isSignedIn = !!user;
+  fabWrap.hidden = !isSignedIn;
+  authBar.innerHTML = '';
+  if (isSignedIn){
+    var span = document.createElement('span');
+    span.textContent = 'Signed in as ' + user.email + ' · ';
+    var btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'link-btn'; btn.textContent = 'Sign Out';
+    btn.addEventListener('click', function(){ signOut(auth); });
+    authBar.appendChild(span); authBar.appendChild(btn);
+  } else {
+    var btn2 = document.createElement('button');
+    btn2.type = 'button'; btn2.className = 'link-btn'; btn2.id = 'signin-open-btn';
+    btn2.textContent = 'Guild lead sign in';
+    btn2.addEventListener('click', openLogin);
+    authBar.appendChild(btn2);
+  }
+  seedRow.hidden = !(isSignedIn && players.length === 0);
+  var openId = detailOverlay.getAttribute('data-id');
+  if (!detailOverlay.hidden && openId) openDetail(openId);
+}
 
 function renderList(){
   var q = searchInput.value.trim().toLowerCase();
@@ -205,6 +421,7 @@ function renderList(){
   resultsCount.textContent = list.length + (list.length===1 ? ' base' : ' bases');
   resultsList.innerHTML = '';
   emptyState.hidden = list.length > 0;
+  seedRow.hidden = !(isSignedIn && players.length === 0);
   list.forEach(function(p){
     var card = document.createElement('button');
     card.type = 'button';
@@ -245,26 +462,226 @@ function openDetail(id){
     ? '<div class="video-frame"><iframe src="' + embed + '" title="Raid video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>'
     : '<div class="no-media">No video available</div>';
 
-  detailNotes.textContent = p.notes || 'No notes yet.';
+  detailNotes.value = p.notes || '';
+  detailNotes.readOnly = !isSignedIn;
+  notesSaveRow.hidden = !isSignedIn;
+  detailOwnerActions.hidden = !isSignedIn;
   detailUpdated.textContent = p.updatedAt ? ('Last updated ' + p.updatedAt) : '';
 
   detailOverlay.hidden = false;
 }
-function closeDetail(){ detailOverlay.hidden = true; }
+function closeDetail(){ detailOverlay.hidden = true; detailOverlay.removeAttribute('data-id'); }
 
+function resetEditorForm(){
+  fUsername.value = '';
+  fKp.value = '';
+  fDifficulty.value = '';
+  fScreenshotUrl.value = '';
+  fScreenshotFile.value = '';
+  fScreenshotPreview.hidden = true;
+  fScreenshotPreview.innerHTML = '';
+  fYoutube.value = '';
+  fNotes.value = '';
+  fError.hidden = true;
+  pendingScreenshotDataUrl = null;
+}
+function openAddEditor(){
+  editingId = null;
+  resetEditorForm();
+  editorTitle.textContent = 'Add Player';
+  editorOverlay.hidden = false;
+}
+function openEditEditor(id){
+  var p = findPlayer(id);
+  if (!p) return;
+  editingId = id;
+  resetEditorForm();
+  editorTitle.textContent = 'Edit Player';
+  fUsername.value = p.username;
+  fKp.value = (p.kingdomPower==null) ? '' : p.kingdomPower;
+  fDifficulty.value = p.difficulty || '';
+  fScreenshotUrl.value = (p.screenshot && p.screenshot.indexOf('data:') !== 0) ? p.screenshot : '';
+  if (p.screenshot){
+    pendingScreenshotDataUrl = p.screenshot.indexOf('data:') === 0 ? p.screenshot : null;
+    fScreenshotPreview.hidden = false;
+    fScreenshotPreview.innerHTML = '<img src="' + p.screenshot.replace(/"/g,'&quot;') + '">';
+  }
+  fYoutube.value = p.youtube || '';
+  fNotes.value = p.notes || '';
+  editorOverlay.hidden = false;
+}
+function closeEditor(){ editorOverlay.hidden = true; }
+
+function openLogin(){
+  loginEmail.value = ''; loginPassword.value = ''; loginError.hidden = true;
+  loginOverlay.hidden = false;
+}
+function closeLogin(){ loginOverlay.hidden = true; }
+
+function fileToCompressedDataUrl(file, maxDim, quality){
+  return new Promise(function(resolve, reject){
+    var reader = new FileReader();
+    reader.onerror = function(){ reject(reader.error); };
+    reader.onload = function(){
+      var img = new Image();
+      img.onerror = reject;
+      img.onload = function(){
+        var w = img.width, h = img.height;
+        if (w > maxDim || h > maxDim){
+          var scale = maxDim / Math.max(w,h);
+          w = Math.round(w*scale); h = Math.round(h*scale);
+        }
+        var canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+fScreenshotFile.addEventListener('change', function(){
+  var file = fScreenshotFile.files && fScreenshotFile.files[0];
+  if (!file) return;
+  fScreenshotPreview.hidden = false;
+  fScreenshotPreview.innerHTML = '<span style="font-size:11px;color:#cdd7ee;">Processing...</span>';
+  fileToCompressedDataUrl(file, 1000, 0.7).then(function(dataUrl){
+    pendingScreenshotDataUrl = dataUrl;
+    fScreenshotUrl.value = '';
+    fScreenshotPreview.innerHTML = '<img src="' + dataUrl + '">';
+  }).catch(function(){
+    fScreenshotPreview.innerHTML = '<span style="font-size:11px;color:#ffb3b3;">Could not read image</span>';
+  });
+});
+fScreenshotUrl.addEventListener('input', function(){
+  if (fScreenshotUrl.value.trim()){
+    pendingScreenshotDataUrl = null;
+    fScreenshotFile.value = '';
+    fScreenshotPreview.hidden = false;
+    fScreenshotPreview.innerHTML = '<img src="' + fScreenshotUrl.value.trim().replace(/"/g,'&quot;') + '">';
+  }
+});
+
+fSaveBtn.addEventListener('click', async function(){
+  var username = fUsername.value.trim();
+  if (!username){ fError.hidden = false; fError.textContent = 'Username is required.'; return; }
+  var id = editingId || slugify(username);
+  var dupe = players.find(function(p){ return p.id === id && p.id !== editingId; });
+  if (dupe){ fError.hidden = false; fError.textContent = 'A player with that username already exists.'; return; }
+  fError.hidden = true;
+
+  var screenshot = pendingScreenshotDataUrl || fScreenshotUrl.value.trim();
+  var kpRaw = fKp.value.trim();
+  var newPlayer = {
+    username: username,
+    kingdomPower: kpRaw === '' ? null : Number(kpRaw),
+    difficulty: fDifficulty.value || null,
+    screenshot: screenshot,
+    youtube: fYoutube.value.trim(),
+    notes: fNotes.value,
+    updatedAt: new Date().toISOString().slice(0,10)
+  };
+
+  fSaveBtn.disabled = true;
+  try {
+    await setDoc(doc(playersCol, id), newPlayer);
+    showToast(editingId ? 'Player updated.' : 'Player added.');
+    closeEditor();
+  } catch(err){
+    fError.hidden = false;
+    fError.textContent = 'Could not save: ' + (err && err.message ? err.message : 'unknown error');
+  }
+  fSaveBtn.disabled = false;
+});
+
+detailNotesSaveBtn.addEventListener('click', async function(){
+  var id = detailOverlay.getAttribute('data-id');
+  if (!id) return;
+  detailNotesSaveBtn.disabled = true;
+  try {
+    await updateDoc(doc(playersCol, id), { notes: detailNotes.value, updatedAt: new Date().toISOString().slice(0,10) });
+    showToast('Notes saved.');
+  } catch(err){
+    showToast('Could not save notes.');
+  }
+  detailNotesSaveBtn.disabled = false;
+});
+
+detailEditBtn.addEventListener('click', function(){
+  var id = detailOverlay.getAttribute('data-id');
+  closeDetail();
+  openEditEditor(id);
+});
+detailDeleteBtn.addEventListener('click', async function(){
+  var id = detailOverlay.getAttribute('data-id');
+  var p = findPlayer(id);
+  if (!p) return;
+  if (!window.confirm('Delete ' + p.username + "'s entry? This cannot be undone.")) return;
+  try {
+    await deleteDoc(doc(playersCol, id));
+    showToast('Player removed.');
+    closeDetail();
+  } catch(err){
+    showToast('Could not delete player.');
+  }
+});
+
+seedBtn.addEventListener('click', async function(){
+  seedBtn.disabled = true;
+  try {
+    for (const p of SEED_PLAYERS){
+      const { id, ...data } = p;
+      await setDoc(doc(playersCol, id), data);
+    }
+    showToast('Roster seeded.');
+  } catch(err){
+    showToast('Could not seed roster: ' + (err && err.message ? err.message : ''));
+  }
+  seedBtn.disabled = false;
+});
+
+addPlayerBtn.addEventListener('click', openAddEditor);
+fCancelBtn.addEventListener('click', closeEditor);
+editorCloseBtn.addEventListener('click', closeEditor);
 detailCloseBtn.addEventListener('click', closeDetail);
 detailOverlay.addEventListener('click', function(e){ if (e.target === detailOverlay) closeDetail(); });
+editorOverlay.addEventListener('click', function(e){ if (e.target === editorOverlay) closeEditor(); });
 searchInput.addEventListener('input', renderList);
+signinOpenBtn.addEventListener('click', openLogin);
+loginCloseBtn.addEventListener('click', closeLogin);
+loginCancelBtn.addEventListener('click', closeLogin);
+loginOverlay.addEventListener('click', function(e){ if (e.target === loginOverlay) closeLogin(); });
+loginSubmitBtn.addEventListener('click', async function(){
+  loginError.hidden = true;
+  loginSubmitBtn.disabled = true;
+  try {
+    await signInWithEmailAndPassword(auth, loginEmail.value.trim(), loginPassword.value);
+    closeLogin();
+    showToast('Signed in.');
+  } catch(err){
+    loginError.hidden = false;
+    loginError.textContent = 'Sign-in failed. Check your email and password.';
+  }
+  loginSubmitBtn.disabled = false;
+});
 
-fetch('data.json', {cache:'no-store'})
-  .then(function(r){ return r.json(); })
-  .then(function(json){ players = json; renderList(); })
-  .catch(function(){
-    resultsCount.textContent = '';
-    emptyState.hidden = false;
-    emptyState.textContent = 'Could not load the roster. Try refreshing.';
-  });
-})();
+onAuthStateChanged(auth, function(user){ updateAuthUI(user); });
+
+onSnapshot(playersCol, function(snapshot){
+  players = snapshot.docs.map(function(d){ return Object.assign({ id: d.id }, d.data()); });
+  renderList();
+  var openId = detailOverlay.getAttribute('data-id');
+  if (!detailOverlay.hidden && openId){
+    if (findPlayer(openId)) openDetail(openId);
+    else closeDetail();
+  }
+}, function(err){
+  resultsCount.textContent = '';
+  emptyState.hidden = false;
+  emptyState.textContent = 'Could not load the roster (' + err.code + ').';
+});
 </script>
 </body>
 </html>
