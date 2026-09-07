@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fableborne Raid Log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏰</text></svg>">
+<style>
+:root{
+  --gold-1:#FFDC30; --gold-2:#F9B41A; --gold-3:#E97500;
+  --blue-light:#e1f6ff; --blue-mid:#b3cff2;
+  --green-1:#4be89a; --green-2:#1ea866;
+  --gray-1:#aab7cf;
+  --panel: rgba(6,26,54,0.6);
+  --panel-border: rgba(255,255,255,0.18);
+  --sky-top:#5fc1ff; --sky-mid:#2f8ce0; --sky-bot:#08356e;
+  --font: 'Baloo 2', system-ui, sans-serif;
+  color-scheme: dark;
+}
+*{box-sizing:border-box;}
+[hidden]{display:none!important;}
+img{max-width:100%;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:var(--font);
+  color:var(--blue-light);
+  background:
+    radial-gradient(ellipse 480px 240px at 8% 0%, rgba(255,255,255,0.16), transparent 60%),
+    radial-gradient(ellipse 420px 220px at 95% 12%, rgba(255,255,255,0.12), transparent 60%),
+    linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 38%, var(--sky-bot) 100%);
+  background-attachment:fixed;
+  min-height:100vh;
+  font-size:14px;
+}
+#app-root{position:relative;z-index:1;max-width:920px;margin:0 auto;padding:28px 16px 80px;}
+
+header.title-block{text-align:center;margin-bottom:22px;}
+h1.brand-title{
+  font-weight:800;font-size:clamp(26px,6vw,42px);margin:0 0 6px;letter-spacing:0.5px;line-height:1.1;
+  background:linear-gradient(180deg, var(--gold-1), var(--gold-2) 55%, var(--gold-3));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  -webkit-text-stroke:1.5px #5b2e00;
+  text-shadow:0 3px 0 rgba(0,0,0,0.35);
+}
+.subtitle{margin:0;font-weight:600;color:var(--blue-light);opacity:0.85;font-size:13px;}
+
+.search-wrap{display:flex;gap:10px;align-items:center;background:var(--panel);border:1px solid var(--panel-border);border-radius:16px;padding:10px 14px;box-shadow:0 4px 0 rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.08);margin-bottom:12px;}
+.search-wrap svg{flex:none;color:var(--blue-mid);}
+#search-input{flex:1;background:transparent;border:none;outline:none;color:#fff;font-family:var(--font);font-size:16px;font-weight:600;}
+#search-input::placeholder{color:var(--blue-mid);opacity:0.8;}
+
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+.filter-chip{display:flex;align-items:center;gap:6px;font-weight:600;font-size:13px;color:var(--blue-light);opacity:0.9;user-select:none;cursor:pointer;}
+.filter-chip input{accent-color:var(--gold-2);width:16px;height:16px;}
+#results-count{font-weight:600;font-size:13px;color:var(--blue-mid);}
+
+#results-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;}
+.player-card{display:flex;flex-direction:column;text-align:left;background:var(--panel);border:1px solid var(--panel-border);border-radius:16px;padding:0;overflow:hidden;cursor:pointer;color:inherit;box-shadow:0 4px 0 rgba(0,0,0,0.25);font-family:inherit;}
+.player-card:hover{outline:2px solid var(--gold-2);}
+.pc-thumb{height:110px;background:rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.pc-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.pc-noimg{color:var(--gray-1);font-size:12px;font-weight:600;}
+.pc-body{padding:10px 12px 12px;display:flex;flex-direction:column;gap:6px;}
+.pc-name{font-weight:700;font-size:16px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pc-kp{display:flex;align-items:center;gap:5px;font-weight:700;font-size:13px;color:var(--gold-1);}
+.pc-kp svg{color:var(--gold-2);}
+.badge{align-self:flex-start;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;letter-spacing:0.3px;}
+.badge.valid{background:linear-gradient(180deg,var(--green-1),var(--green-2));color:#06301c;}
+.badge.novalid{background:rgba(255,255,255,0.12);color:var(--gray-1);border:1px solid var(--panel-border);}
+
+#empty-state{text-align:center;padding:40px 20px;color:var(--blue-mid);font-weight:600;}
+
+.overlay{position:fixed;inset:0;background:rgba(3,12,28,0.72);backdrop-filter:blur(2px);display:flex;align-items:flex-start;justify-content:center;padding:24px 12px;overflow-y:auto;z-index:50;}
+.modal-card{background:linear-gradient(180deg, rgba(15,45,86,0.98), rgba(6,24,50,0.98));border:1px solid var(--panel-border);border-radius:20px;max-width:640px;width:100%;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,0.5);}
+.modal-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px;}
+.modal-head h2{margin:0;font-size:22px;font-weight:800;color:#fff;}
+.icon-btn{background:rgba(255,255,255,0.1);border:1px solid var(--panel-border);color:#fff;border-radius:10px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;}
+.icon-btn:hover{background:rgba(255,255,255,0.2);}
+
+.detail-kp-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;}
+.detail-kp{display:flex;align-items:center;gap:6px;font-weight:800;font-size:16px;color:var(--gold-1);}
+.detail-kp svg{color:var(--gold-2);}
+
+.media-block{margin-bottom:16px;}
+.media-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--blue-mid);margin-bottom:6px;}
+.screenshot-frame{border-radius:14px;overflow:hidden;border:1px solid var(--panel-border);background:rgba(0,0,0,0.25);}
+.screenshot-frame img{width:100%;display:block;}
+.no-media{padding:26px 14px;text-align:center;color:var(--gray-1);font-weight:700;background:rgba(0,0,0,0.2);border:1px dashed var(--panel-border);border-radius:14px;}
+.video-frame{position:relative;padding-top:56.25%;border-radius:14px;overflow:hidden;border:1px solid var(--panel-border);background:#000;}
+.video-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}
+.notes-text{white-space:pre-wrap;background:rgba(255,255,255,0.06);border:1px solid var(--panel-border);border-radius:12px;color:#fff;padding:10px 12px;font-family:var(--font);font-size:14px;font-weight:500;min-height:24px;}
+.updated-note{margin-top:10px;font-size:11.5px;color:var(--gray-1);}
+
+@media (max-width:520px){
+  .overlay{padding:0;}
+  .modal-card{border-radius:0;min-height:100vh;}
+}
+</style>
+</head>
+<body>
+<div id="app-root">
+  <header class="title-block">
+    <h1 class="brand-title">FABLEBORNE RAID LOG</h1>
+    <p class="subtitle">Find a base. Plan the raid.</p>
+  </header>
+  <div class="search-wrap">
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input id="search-input" type="text" placeholder="Search player username...">
+  </div>
+  <div class="toolbar">
+    <label class="filter-chip"><input type="checkbox" id="filter-valid-only"> Raid Ready only</label>
+    <span id="results-count"></span>
+  </div>
+  <div id="results-list"></div>
+  <div id="empty-state" hidden>No players match your search yet.</div>
+</div>
+
+<div class="overlay" id="detail-overlay" hidden>
+  <div class="modal-card">
+    <div class="modal-head">
+      <h2 id="detail-username"></h2>
+      <button type="button" class="icon-btn" id="detail-close-btn">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg>
+      </button>
+    </div>
+    <div class="detail-kp-row">
+      <div class="detail-kp">
+        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M12 2l7 2.6v5.6c0 5-3 8.7-7 11-4-2.3-7-6-7-11V4.6L12 2z" fill="currentColor"/></svg>
+        <span id="detail-kp-value"></span>
+      </div>
+      <span class="badge" id="detail-badge"></span>
+    </div>
+    <div class="media-block">
+      <div class="media-label">Base Screenshot</div>
+      <div id="detail-screenshot-wrap"></div>
+    </div>
+    <div class="media-block">
+      <div class="media-label">Raid Video</div>
+      <div id="detail-video-wrap"></div>
+    </div>
+    <div class="media-block">
+      <div class="media-label">Notes</div>
+      <div class="notes-text" id="detail-notes"></div>
+    </div>
+    <div id="detail-updated" class="updated-note"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+var SHIELD_ICON = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M12 2l7 2.6v5.6c0 5-3 8.7-7 11-4-2.3-7-6-7-11V4.6L12 2z" fill="currentColor"/></svg>';
+
+var players = [];
+var searchInput = document.getElementById('search-input');
+var filterValidOnly = document.getElementById('filter-valid-only');
+var resultsList = document.getElementById('results-list');
+var resultsCount = document.getElementById('results-count');
+var emptyState = document.getElementById('empty-state');
+
+var detailOverlay = document.getElementById('detail-overlay');
+var detailUsername = document.getElementById('detail-username');
+var detailKpValue = document.getElementById('detail-kp-value');
+var detailBadge = document.getElementById('detail-badge');
+var detailScreenshotWrap = document.getElementById('detail-screenshot-wrap');
+var detailVideoWrap = document.getElementById('detail-video-wrap');
+var detailNotes = document.getElementById('detail-notes');
+var detailUpdated = document.getElementById('detail-updated');
+var detailCloseBtn = document.getElementById('detail-close-btn');
+
+function escapeHtml(str){
+  return String(str==null?'':str).replace(/[&<>"']/g, function(s){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s];
+  });
+}
+function isValidBase(p){ return !!(p.screenshot || p.youtube); }
+function youtubeEmbedUrl(url){
+  if(!url) return null;
+  try{
+    var u = new URL(url);
+    var id = null;
+    var host = u.hostname.replace(/^www\./,'');
+    if (host === 'youtu.be') id = u.pathname.slice(1);
+    else if (host === 'youtube.com' || host === 'm.youtube.com'){
+      if (u.pathname === '/watch') id = u.searchParams.get('v');
+      else if (u.pathname.indexOf('/embed/') === 0) id = u.pathname.split('/')[2];
+      else if (u.pathname.indexOf('/shorts/') === 0) id = u.pathname.split('/')[2];
+    }
+    id = id ? id.split('&')[0].split('?')[0] : null;
+    return id ? ('https://www.youtube.com/embed/' + id) : null;
+  } catch(e){ return null; }
+}
+
+function renderList(){
+  var q = searchInput.value.trim().toLowerCase();
+  var onlyValid = filterValidOnly.checked;
+  var list = players.filter(function(p){ return p.username.toLowerCase().indexOf(q) !== -1; });
+  if (onlyValid) list = list.filter(isValidBase);
+  list = list.slice().sort(function(a,b){
+    var kd = (b.kingdomPower||0) - (a.kingdomPower||0);
+    if (kd !== 0) return kd;
+    return a.username.localeCompare(b.username);
+  });
+  resultsCount.textContent = list.length + (list.length===1 ? ' base' : ' bases');
+  resultsList.innerHTML = '';
+  emptyState.hidden = list.length > 0;
+  list.forEach(function(p){
+    var card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'player-card';
+    var thumbHtml = p.screenshot
+      ? '<img src="' + escapeHtml(p.screenshot) + '" alt="" loading="lazy">'
+      : '<div class="pc-noimg">No Image</div>';
+    var kp = (p.kingdomPower==null || p.kingdomPower==='') ? String.fromCharCode(8212) : p.kingdomPower;
+    var badgeClass = isValidBase(p) ? 'valid' : 'novalid';
+    var badgeText = isValidBase(p) ? 'Raid Ready' : 'No Media';
+    card.innerHTML =
+      '<div class="pc-thumb">' + thumbHtml + '</div>' +
+      '<div class="pc-body">' +
+        '<div class="pc-name">' + escapeHtml(p.username) + '</div>' +
+        '<div class="pc-kp">' + SHIELD_ICON + '<span>' + kp + '</span></div>' +
+        '<span class="badge ' + badgeClass + '">' + badgeText + '</span>' +
+      '</div>';
+    card.addEventListener('click', function(){ openDetail(p.id); });
+    resultsList.appendChild(card);
+  });
+}
+
+function findPlayer(id){
+  for (var i=0;i<players.length;i++){ if (players[i].id === id) return players[i]; }
+  return null;
+}
+
+function openDetail(id){
+  var p = findPlayer(id);
+  if (!p) return;
+  detailOverlay.setAttribute('data-id', id);
+  detailUsername.textContent = p.username;
+  detailKpValue.textContent = (p.kingdomPower==null || p.kingdomPower==='') ? String.fromCharCode(8212) : p.kingdomPower;
+  var valid = isValidBase(p);
+  detailBadge.className = 'badge ' + (valid ? 'valid' : 'novalid');
+  detailBadge.textContent = valid ? 'Raid Ready' : 'No Media';
+
+  detailScreenshotWrap.innerHTML = p.screenshot
+    ? '<div class="screenshot-frame"><img src="' + escapeHtml(p.screenshot) + '" alt="' + escapeHtml(p.username) + ' base"></div>'
+    : '<div class="no-media">No screenshot available</div>';
+
+  var embed = youtubeEmbedUrl(p.youtube);
+  detailVideoWrap.innerHTML = embed
+    ? '<div class="video-frame"><iframe src="' + embed + '" title="Raid video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>'
+    : '<div class="no-media">No video available</div>';
+
+  detailNotes.textContent = p.notes || 'No notes yet.';
+  detailUpdated.textContent = p.updatedAt ? ('Last updated ' + p.updatedAt) : '';
+
+  detailOverlay.hidden = false;
+}
+function closeDetail(){ detailOverlay.hidden = true; }
+
+detailCloseBtn.addEventListener('click', closeDetail);
+detailOverlay.addEventListener('click', function(e){ if (e.target === detailOverlay) closeDetail(); });
+searchInput.addEventListener('input', renderList);
+filterValidOnly.addEventListener('change', renderList);
+
+fetch('data.json', {cache:'no-store'})
+  .then(function(r){ return r.json(); })
+  .then(function(json){ players = json; renderList(); })
+  .catch(function(){
+    resultsCount.textContent = '';
+    emptyState.hidden = false;
+    emptyState.textContent = 'Could not load the roster. Try refreshing.';
+  });
+})();
+</script>
+</body>
+</html>

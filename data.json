@@ -1,0 +1,20 @@
+[
+  {
+    "id": "petrosky",
+    "username": "Petrosky",
+    "kingdomPower": 225,
+    "screenshot": "images/petrosky.jpg",
+    "youtube": "",
+    "notes": "",
+    "updatedAt": "2026-09-07"
+  },
+  {
+    "id": "babrichi",
+    "username": "Babrichi",
+    "kingdomPower": null,
+    "screenshot": "",
+    "youtube": "https://youtu.be/72tbW5y6vzE",
+    "notes": "",
+    "updatedAt": "2026-09-07"
+  }
+]
