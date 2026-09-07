@@ -112,7 +112,7 @@ h1.brand-title{
 .boss-row{display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
 .boss-chip{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10.5px;font-weight:700;color:var(--blue-mid);}
 .boss-chip.boss-chip-absent{opacity:0.3;filter:grayscale(1);}
-.boss-icon{width:32px;height:32px;border-radius:8px;overflow:hidden;border:1px solid var(--panel-border);background:rgba(0,0,0,0.25);flex:none;}
+.boss-icon{width:32px;height:32px;border-radius:8px;overflow:hidden;border:1px solid var(--panel-border);background:rgba(0,0,0,0.25);flex:none;display:flex;align-items:center;justify-content:center;}
 .boss-icon img{width:100%;height:100%;object-fit:cover;display:block;}
 .boss-row-sm{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
 .boss-icon-sm{width:40px;height:40px;border-radius:10px;}
@@ -122,6 +122,8 @@ h1.brand-title{
 .icon-checkbox-grid .icon-checkbox-item input{position:absolute;opacity:0;width:0;height:0;}
 .icon-checkbox-grid .icon-checkbox-item img{width:40px;height:40px;border-radius:8px;object-fit:cover;border:2px solid var(--panel-border);}
 .icon-checkbox-grid .icon-checkbox-item input:checked + img{border-color:var(--gold-2);box-shadow:0 0 0 2px rgba(249,180,26,0.35);}
+.icon-checkbox-grid .icon-checkbox-item .icon-checkbox-svg{width:40px;height:40px;border-radius:8px;border:2px solid var(--panel-border);background:rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;}
+.icon-checkbox-grid .icon-checkbox-item input:checked + .icon-checkbox-svg{border-color:var(--gold-2);box-shadow:0 0 0 2px rgba(249,180,26,0.35);}
 .field-row{display:flex;gap:20px;flex-wrap:wrap;}
 .field-row .field{flex:1;min-width:190px;}
 .misc-stack{display:flex;flex-direction:column;gap:12px;align-items:flex-start;}
@@ -276,6 +278,11 @@ h1.brand-title{
                 <img src="images/icons/singer.png" alt="Max Singers">
                 <span>Max Singers</span>
               </label>
+              <label class="icon-checkbox-item">
+                <input type="checkbox" id="f-misc-highlevel">
+                <span class="icon-checkbox-svg"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 3l8 9h-5v9h-6v-9H4l8-9z" fill="#ef5b5b"/></svg></span>
+                <span>High Level Troops</span>
+              </label>
             </div>
           </div>
         </div>
@@ -367,6 +374,9 @@ const SEED_PLAYERS = [
 ];
 
 const SHIELD_ICON = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M12 2l7 2.6v5.6c0 5-3 8.7-7 11-4-2.3-7-6-7-11V4.6L12 2z" fill="currentColor"/></svg>';
+function highLevelIconSvg(size){
+  return '<svg viewBox="0 0 24 24" width="' + size + '" height="' + size + '" aria-hidden="true"><path d="M12 3l8 9h-5v9h-6v-9H4l8-9z" fill="#ef5b5b"/></svg>';
+}
 const DIFF_LABELS = {easy:'Easy', medium:'Medium', hard:'Hard'};
 function diffIcon(diff){
   if (!diff || !DIFF_LABELS[diff]) return '';
@@ -390,12 +400,14 @@ function miscSmallHtml(p){
   var html = '';
   if (p.longLayout) html += '<span class="long-badge">Long</span>';
   if (p.maxSingers) html += '<span class="boss-icon boss-icon-xs" title="Max Singers"><img src="images/icons/singer.png" alt="Max Singers"></span>';
+  if (p.highLevelTroops) html += '<span class="boss-icon boss-icon-xs" title="High Level Troops">' + highLevelIconSvg(14) + '</span>';
   return html;
 }
 function renderDetailMisc(container, p){
   var parts = [];
   if (p.longLayout) parts.push('<div class="boss-chip"><span class="long-badge">Long</span></div>');
   if (p.maxSingers) parts.push('<div class="boss-chip"><span class="boss-icon"><img src="images/icons/singer.png" alt="Max Singers"></span><span>Max Singers</span></div>');
+  if (p.highLevelTroops) parts.push('<div class="boss-chip"><span class="boss-icon">' + highLevelIconSvg(18) + '</span><span>High Level Troops</span></div>');
   container.innerHTML = parts.join('');
   container.hidden = parts.length === 0;
 }
@@ -473,6 +485,7 @@ const fBossGrid = document.getElementById('f-boss-grid');
 buildBossCheckboxGrid(fBossGrid);
 const fMiscLong = document.getElementById('f-misc-long');
 const fMiscMaxSingers = document.getElementById('f-misc-maxsingers');
+const fMiscHighLevel = document.getElementById('f-misc-highlevel');
 const fScreenshotUrl = document.getElementById('f-screenshot-url');
 const fScreenshotFile = document.getElementById('f-screenshot-file');
 const fScreenshotPreview = document.getElementById('f-screenshot-preview');
@@ -631,6 +644,7 @@ function resetEditorForm(){
   setCheckedBosses(fBossGrid, []);
   fMiscLong.checked = false;
   fMiscMaxSingers.checked = false;
+  fMiscHighLevel.checked = false;
   fScreenshotUrl.value = '';
   fScreenshotFile.value = '';
   fScreenshotPreview.hidden = true;
@@ -658,6 +672,7 @@ function openEditEditor(id){
   setCheckedBosses(fBossGrid, p.bosses);
   fMiscLong.checked = !!p.longLayout;
   fMiscMaxSingers.checked = !!p.maxSingers;
+  fMiscHighLevel.checked = !!p.highLevelTroops;
   fScreenshotUrl.value = (p.screenshot && p.screenshot.indexOf('data:') !== 0) ? p.screenshot : '';
   if (p.screenshot){
     pendingScreenshotDataUrl = p.screenshot.indexOf('data:') === 0 ? p.screenshot : null;
@@ -740,6 +755,7 @@ fSaveBtn.addEventListener('click', async function(){
     bosses: getCheckedBosses(fBossGrid),
     longLayout: fMiscLong.checked,
     maxSingers: fMiscMaxSingers.checked,
+    highLevelTroops: fMiscHighLevel.checked,
     screenshot: screenshot,
     youtube: fYoutube.value.trim(),
     notes: fNotes.value,
