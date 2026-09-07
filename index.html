@@ -725,8 +725,9 @@ fScreenshotUrl.addEventListener('input', function(){
 fSaveBtn.addEventListener('click', async function(){
   var username = fUsername.value.trim();
   if (!username){ fError.hidden = false; fError.textContent = 'Username is required.'; return; }
-  var id = editingId || slugify(username);
-  var dupe = players.find(function(p){ return p.id === id && p.id !== editingId; });
+  var newId = slugify(username);
+  var id = editingId || newId;
+  var dupe = players.find(function(p){ return p.id === newId && p.id !== editingId; });
   if (dupe){ fError.hidden = false; fError.textContent = 'A player with that username already exists.'; return; }
   fError.hidden = true;
 
