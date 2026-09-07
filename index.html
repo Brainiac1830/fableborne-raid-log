@@ -101,10 +101,23 @@ h1.brand-title{
 .modal-head h2{margin:0;font-size:22px;font-weight:800;color:#fff;display:flex;align-items:center;gap:8px;}
 .icon-btn{background:rgba(255,255,255,0.1);border:1px solid var(--panel-border);color:#fff;border-radius:10px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;}
 .icon-btn:hover{background:rgba(255,255,255,0.2);}
+.modal-head-right{display:flex;align-items:center;gap:12px;flex:none;}
 
-.detail-kp-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;}
-.detail-kp{display:flex;align-items:center;gap:6px;font-weight:800;font-size:16px;color:var(--gold-1);}
+.detail-kp{display:flex;align-items:center;gap:6px;font-weight:800;font-size:16px;color:var(--gold-1);white-space:nowrap;}
 .detail-kp svg{color:var(--gold-2);}
+
+.boss-row{display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
+.boss-chip{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10.5px;font-weight:700;color:var(--blue-mid);}
+.boss-chip.boss-chip-absent{opacity:0.3;filter:grayscale(1);}
+.boss-icon{width:32px;height:32px;border-radius:8px;overflow:hidden;border:1px solid var(--panel-border);background:rgba(0,0,0,0.25);flex:none;}
+.boss-icon img{width:100%;height:100%;object-fit:cover;display:block;}
+.boss-row-sm{display:flex;gap:4px;flex-wrap:wrap;margin:2px 0;}
+.boss-icon-sm{width:20px;height:20px;border-radius:5px;}
+.boss-checkbox-grid{display:flex;flex-wrap:wrap;gap:12px;}
+.boss-checkbox-item{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;font-size:11px;font-weight:700;color:var(--blue-mid);}
+.boss-checkbox-item input{position:absolute;opacity:0;width:0;height:0;}
+.boss-checkbox-item img{width:40px;height:40px;border-radius:8px;object-fit:cover;border:2px solid var(--panel-border);}
+.boss-checkbox-item input:checked + img{border-color:var(--gold-2);box-shadow:0 0 0 2px rgba(249,180,26,0.35);}
 
 .media-block{margin-bottom:16px;}
 .media-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--blue-mid);margin-bottom:6px;}
@@ -182,28 +195,29 @@ h1.brand-title{
   <div class="modal-card">
     <div class="modal-head">
       <h2 id="detail-username"></h2>
-      <button type="button" class="icon-btn" id="detail-close-btn">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg>
-      </button>
-    </div>
-    <div class="detail-kp-row">
-      <div class="detail-kp">
-        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M12 2l7 2.6v5.6c0 5-3 8.7-7 11-4-2.3-7-6-7-11V4.6L12 2z" fill="currentColor"/></svg>
-        <span id="detail-kp-value"></span>
+      <div class="modal-head-right">
+        <div class="detail-kp">
+          <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M12 2l7 2.6v5.6c0 5-3 8.7-7 11-4-2.3-7-6-7-11V4.6L12 2z" fill="currentColor"/></svg>
+          <span id="detail-kp-value"></span>
+        </div>
+        <button type="button" class="icon-btn" id="detail-close-btn">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg>
+        </button>
       </div>
     </div>
+    <div class="boss-row" id="detail-bosses"></div>
     <div class="media-block">
       <div class="media-label">Base Screenshot</div>
       <div id="detail-screenshot-wrap"></div>
     </div>
     <div class="media-block">
-      <div class="media-label">Raid Video</div>
-      <div id="detail-video-wrap"></div>
-    </div>
-    <div class="media-block">
       <div class="media-label">Notes</div>
       <textarea class="notes-box" id="detail-notes" readonly></textarea>
       <div class="detail-actions" id="notes-save-row" hidden><button type="button" class="btn btn-gold btn-sm" id="detail-notes-save-btn">Save Notes</button></div>
+    </div>
+    <div class="media-block">
+      <div class="media-label">Raid Video</div>
+      <div id="detail-video-wrap"></div>
     </div>
     <div id="detail-updated" class="updated-note"></div>
     <div class="detail-actions" id="detail-owner-actions" hidden>
@@ -232,6 +246,10 @@ h1.brand-title{
           <option value="medium">Medium</option>
           <option value="hard">Hard</option>
         </select>
+      </div>
+      <div class="field">
+        <label>Bosses Present</label>
+        <div class="boss-checkbox-grid" id="f-boss-grid"></div>
       </div>
       <div class="field">
         <label>Base Screenshot</label>
@@ -313,10 +331,10 @@ const db = getFirestore(app);
 const playersCol = collection(db, 'players');
 
 const SEED_PLAYERS = [
-  { id: 'petrosky', username: 'Petrosky', kingdomPower: 225, difficulty: 'medium', screenshot: 'images/petrosky.jpg', youtube: '', notes: '', updatedAt: '2026-09-07' },
-  { id: 'babrichi', username: 'Babrichi', kingdomPower: null, difficulty: 'medium', screenshot: '', youtube: 'https://youtu.be/72tbW5y6vzE', notes: '', updatedAt: '2026-09-07' },
-  { id: 'nihaly5', username: 'nihaly5', kingdomPower: 250, difficulty: 'easy', screenshot: '', youtube: 'https://youtu.be/QQ1npse0t5Q', notes: '', updatedAt: '2026-09-07' },
-  { id: 'herbetth', username: 'herbetth', kingdomPower: 225, difficulty: 'medium', screenshot: '', youtube: 'https://youtu.be/LqJiKrLVDK8', notes: '', updatedAt: '2026-09-07' }
+  { id: 'petrosky', username: 'Petrosky', kingdomPower: 225, difficulty: 'medium', bosses: [], screenshot: 'images/petrosky.jpg', youtube: '', notes: '', updatedAt: '2026-09-07' },
+  { id: 'babrichi', username: 'Babrichi', kingdomPower: null, difficulty: 'medium', bosses: [], screenshot: '', youtube: 'https://youtu.be/72tbW5y6vzE', notes: '', updatedAt: '2026-09-07' },
+  { id: 'nihaly5', username: 'nihaly5', kingdomPower: 250, difficulty: 'easy', bosses: [], screenshot: '', youtube: 'https://youtu.be/QQ1npse0t5Q', notes: '', updatedAt: '2026-09-07' },
+  { id: 'herbetth', username: 'herbetth', kingdomPower: 225, difficulty: 'medium', bosses: [], screenshot: '', youtube: 'https://youtu.be/LqJiKrLVDK8', notes: '', updatedAt: '2026-09-07' }
 ];
 
 const SHIELD_ICON = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M12 2l7 2.6v5.6c0 5-3 8.7-7 11-4-2.3-7-6-7-11V4.6L12 2z" fill="currentColor"/></svg>';
@@ -328,6 +346,48 @@ function diffIcon(diff){
   return '<span class="diff-icon" style="color:' + DIFF_COLORS[diff] + '" title="' + label + '" aria-label="' + label + '">' +
     '<svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M12 2l6 7-6 13-6-13 6-7z" fill="currentColor"/></svg>' +
   '</span>';
+}
+
+const BOSSES = [
+  { id: 'shaman', label: 'Shaman', icon: 'images/icons/shaman.png' },
+  { id: 'yeti', label: 'Yeti', icon: 'images/icons/yeti.png' },
+  { id: 'warlock', label: 'Warlock', icon: 'images/icons/warlock.png' },
+  { id: 'blaster', label: 'Blaster', icon: 'images/icons/blaster.png' },
+  { id: 'queen', label: 'Queen', icon: 'images/icons/queen.png' }
+];
+function bossIconsSmallHtml(bosses){
+  var present = Array.isArray(bosses) ? bosses : [];
+  return BOSSES.filter(function(b){ return present.indexOf(b.id) !== -1; }).map(function(b){
+    return '<span class="boss-icon boss-icon-sm" title="' + b.label + '"><img src="' + b.icon + '" alt="' + b.label + '"></span>';
+  }).join('');
+}
+function renderBossChips(container, bosses){
+  var present = Array.isArray(bosses) ? bosses : [];
+  container.innerHTML = BOSSES.map(function(b){
+    var has = present.indexOf(b.id) !== -1;
+    return '<div class="boss-chip' + (has ? '' : ' boss-chip-absent') + '">' +
+      '<span class="boss-icon"><img src="' + b.icon + '" alt="' + b.label + '"></span>' +
+      '<span>' + b.label + '</span>' +
+    '</div>';
+  }).join('');
+}
+function buildBossCheckboxGrid(container){
+  container.innerHTML = BOSSES.map(function(b){
+    return '<label class="boss-checkbox-item" data-boss="' + b.id + '">' +
+      '<input type="checkbox" value="' + b.id + '">' +
+      '<img src="' + b.icon + '" alt="' + b.label + '">' +
+      '<span>' + b.label + '</span>' +
+    '</label>';
+  }).join('');
+}
+function getCheckedBosses(container){
+  return Array.prototype.slice.call(container.querySelectorAll('input[type=checkbox]:checked')).map(function(el){ return el.value; });
+}
+function setCheckedBosses(container, bosses){
+  var present = Array.isArray(bosses) ? bosses : [];
+  Array.prototype.forEach.call(container.querySelectorAll('input[type=checkbox]'), function(el){
+    el.checked = present.indexOf(el.value) !== -1;
+  });
 }
 
 let players = [];
@@ -352,6 +412,7 @@ const mainContent = document.getElementById('main-content');
 const detailOverlay = document.getElementById('detail-overlay');
 const detailUsername = document.getElementById('detail-username');
 const detailKpValue = document.getElementById('detail-kp-value');
+const detailBosses = document.getElementById('detail-bosses');
 const detailScreenshotWrap = document.getElementById('detail-screenshot-wrap');
 const detailVideoWrap = document.getElementById('detail-video-wrap');
 const detailNotes = document.getElementById('detail-notes');
@@ -369,6 +430,8 @@ const editorCloseBtn = document.getElementById('editor-close-btn');
 const fUsername = document.getElementById('f-username');
 const fKp = document.getElementById('f-kp');
 const fDifficulty = document.getElementById('f-difficulty');
+const fBossGrid = document.getElementById('f-boss-grid');
+buildBossCheckboxGrid(fBossGrid);
 const fScreenshotUrl = document.getElementById('f-screenshot-url');
 const fScreenshotFile = document.getElementById('f-screenshot-file');
 const fScreenshotPreview = document.getElementById('f-screenshot-preview');
@@ -474,10 +537,12 @@ function renderList(){
       ? '<img src="' + escapeHtml(p.screenshot) + '" alt="" loading="lazy">'
       : '<div class="pc-noimg">No Image</div>';
     var kp = (p.kingdomPower==null || p.kingdomPower==='') ? String.fromCharCode(8212) : p.kingdomPower;
+    var bossHtml = bossIconsSmallHtml(p.bosses);
     card.innerHTML =
       '<div class="pc-thumb">' + thumbHtml + '</div>' +
       '<div class="pc-body">' +
         '<div class="pc-name"><span>' + escapeHtml(p.username) + '</span>' + diffIcon(p.difficulty) + '</div>' +
+        (bossHtml ? '<div class="boss-row-sm">' + bossHtml + '</div>' : '') +
         '<div class="pc-kp">' + SHIELD_ICON + '<span>' + kp + '</span></div>' +
       '</div>';
     card.addEventListener('click', function(){ openDetail(p.id); });
@@ -496,6 +561,7 @@ function openDetail(id){
   detailOverlay.setAttribute('data-id', id);
   detailUsername.innerHTML = '<span>' + escapeHtml(p.username) + '</span>' + diffIcon(p.difficulty);
   detailKpValue.textContent = (p.kingdomPower==null || p.kingdomPower==='') ? String.fromCharCode(8212) : p.kingdomPower;
+  renderBossChips(detailBosses, p.bosses);
 
   detailScreenshotWrap.innerHTML = p.screenshot
     ? '<div class="screenshot-frame"><img src="' + escapeHtml(p.screenshot) + '" alt="' + escapeHtml(p.username) + ' base"></div>'
@@ -520,6 +586,7 @@ function resetEditorForm(){
   fUsername.value = '';
   fKp.value = '';
   fDifficulty.value = '';
+  setCheckedBosses(fBossGrid, []);
   fScreenshotUrl.value = '';
   fScreenshotFile.value = '';
   fScreenshotPreview.hidden = true;
@@ -544,6 +611,7 @@ function openEditEditor(id){
   fUsername.value = p.username;
   fKp.value = (p.kingdomPower==null) ? '' : p.kingdomPower;
   fDifficulty.value = p.difficulty || '';
+  setCheckedBosses(fBossGrid, p.bosses);
   fScreenshotUrl.value = (p.screenshot && p.screenshot.indexOf('data:') !== 0) ? p.screenshot : '';
   if (p.screenshot){
     pendingScreenshotDataUrl = p.screenshot.indexOf('data:') === 0 ? p.screenshot : null;
@@ -622,6 +690,7 @@ fSaveBtn.addEventListener('click', async function(){
     username: username,
     kingdomPower: kpRaw === '' ? null : Number(kpRaw),
     difficulty: fDifficulty.value || null,
+    bosses: getCheckedBosses(fBossGrid),
     screenshot: screenshot,
     youtube: fYoutube.value.trim(),
     notes: fNotes.value,
