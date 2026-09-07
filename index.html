@@ -6,7 +6,7 @@
 <title>Fableborne Raid Log</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Work+Sans:wght@700;800;900&display=swap" rel="stylesheet">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏰</text></svg>">
 <style>
 :root{
@@ -42,6 +42,7 @@ button{font-family:inherit;}
 
 header.title-block{text-align:center;margin-bottom:14px;position:relative;}
 h1.brand-title{
+  font-family:'Work Sans', sans-serif;
   font-weight:800;font-size:clamp(26px,6vw,42px);margin:0 0 6px;letter-spacing:0.5px;line-height:1.1;
   background:linear-gradient(180deg, var(--gold-1), var(--gold-2) 55%, var(--gold-3));
   -webkit-background-clip:text;background-clip:text;color:transparent;
@@ -255,6 +256,8 @@ h1.brand-title{
       <button type="button" class="btn btn-navy btn-sm" id="login-cancel-btn">Cancel</button>
       <button type="button" class="btn btn-gold btn-sm" id="login-submit-btn">Sign In</button>
     </div>
+    <div class="or-sep">&mdash; or &mdash;</div>
+    <button type="button" class="btn btn-navy btn-sm" id="google-signin-btn" style="width:100%;">Sign in with Google</button>
   </div>
 </div>
 
@@ -263,10 +266,10 @@ h1.brand-title{
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
 import {
-  getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut
+  getAuth, onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
 import {
-  getFirestore, collection, doc, onSnapshot, setDoc, updateDoc, deleteDoc, getDocs
+  getFirestore, collection, doc, getDoc, onSnapshot, setDoc, updateDoc, deleteDoc
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -302,7 +305,8 @@ function diffIcon(diff){
 }
 
 let players = [];
-let isSignedIn = false;
+let currentUser = null;
+let isAdmin = false;
 let editingId = null;
 let pendingScreenshotDataUrl = null;
 let toastTimer = null;
@@ -354,6 +358,7 @@ const loginSubmitBtn = document.getElementById('login-submit-btn');
 const loginEmail = document.getElementById('login-email');
 const loginPassword = document.getElementById('login-password');
 const loginError = document.getElementById('login-error');
+const googleSigninBtn = document.getElementById('google-signin-btn');
 
 function escapeHtml(str){
   return String(str==null?'':str).replace(/[&<>"']/g, function(s){
@@ -387,13 +392,21 @@ function showToast(msg){
   toastTimer = setTimeout(function(){ t.hidden = true; }, 3200);
 }
 
-function updateAuthUI(user){
-  isSignedIn = !!user;
-  fabWrap.hidden = !isSignedIn;
+async function updateAuthUI(user){
+  currentUser = user;
+  isAdmin = false;
+  if (user){
+    try {
+      var adminsSnap = await getDoc(doc(db, 'config', 'admins'));
+      var emails = (adminsSnap.exists() && Array.isArray(adminsSnap.data().emails)) ? adminsSnap.data().emails : [];
+      isAdmin = emails.map(function(e){ return String(e).toLowerCase(); }).indexOf(user.email.toLowerCase()) !== -1;
+    } catch(e){ isAdmin = false; }
+  }
+  fabWrap.hidden = !isAdmin;
   authBar.innerHTML = '';
-  if (isSignedIn){
+  if (user){
     var span = document.createElement('span');
-    span.textContent = 'Signed in as ' + user.email + ' · ';
+    span.textContent = 'Signed in as ' + user.email + (isAdmin ? '' : ' (view only — not yet approved to edit)') + ' · ';
     var btn = document.createElement('button');
     btn.type = 'button'; btn.className = 'link-btn'; btn.textContent = 'Sign Out';
     btn.addEventListener('click', function(){ signOut(auth); });
@@ -405,7 +418,7 @@ function updateAuthUI(user){
     btn2.addEventListener('click', openLogin);
     authBar.appendChild(btn2);
   }
-  seedRow.hidden = !(isSignedIn && players.length === 0);
+  seedRow.hidden = !(isAdmin && players.length === 0);
   var openId = detailOverlay.getAttribute('data-id');
   if (!detailOverlay.hidden && openId) openDetail(openId);
 }
@@ -421,7 +434,7 @@ function renderList(){
   resultsCount.textContent = list.length + (list.length===1 ? ' base' : ' bases');
   resultsList.innerHTML = '';
   emptyState.hidden = list.length > 0;
-  seedRow.hidden = !(isSignedIn && players.length === 0);
+  seedRow.hidden = !(isAdmin && players.length === 0);
   list.forEach(function(p){
     var card = document.createElement('button');
     card.type = 'button';
@@ -463,9 +476,9 @@ function openDetail(id){
     : '<div class="no-media">No video available</div>';
 
   detailNotes.value = p.notes || '';
-  detailNotes.readOnly = !isSignedIn;
-  notesSaveRow.hidden = !isSignedIn;
-  detailOwnerActions.hidden = !isSignedIn;
+  detailNotes.readOnly = !isAdmin;
+  notesSaveRow.hidden = !isAdmin;
+  detailOwnerActions.hidden = !isAdmin;
   detailUpdated.textContent = p.updatedAt ? ('Last updated ' + p.updatedAt) : '';
 
   detailOverlay.hidden = false;
@@ -665,6 +678,19 @@ loginSubmitBtn.addEventListener('click', async function(){
     loginError.textContent = 'Sign-in failed. Check your email and password.';
   }
   loginSubmitBtn.disabled = false;
+});
+googleSigninBtn.addEventListener('click', async function(){
+  loginError.hidden = true;
+  googleSigninBtn.disabled = true;
+  try {
+    await signInWithPopup(auth, new GoogleAuthProvider());
+    closeLogin();
+    showToast('Signed in.');
+  } catch(err){
+    loginError.hidden = false;
+    loginError.textContent = 'Google sign-in failed or was cancelled.';
+  }
+  googleSigninBtn.disabled = false;
 });
 
 onAuthStateChanged(auth, function(user){ updateAuthUI(user); });
