@@ -64,7 +64,9 @@ h1.brand-title{
 .pc-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
 .pc-noimg{color:var(--gray-1);font-size:12px;font-weight:600;}
 .pc-body{padding:10px 12px 12px;display:flex;flex-direction:column;gap:6px;}
-.pc-name{font-weight:700;font-size:16px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pc-name{font-weight:700;font-size:16px;color:#fff;display:flex;align-items:center;gap:6px;}
+.pc-name span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+.diff-icon{display:inline-flex;flex:none;}
 .pc-kp{display:flex;align-items:center;gap:5px;font-weight:700;font-size:13px;color:var(--gold-1);}
 .pc-kp svg{color:var(--gold-2);}
 .badge{align-self:flex-start;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;letter-spacing:0.3px;}
@@ -76,7 +78,7 @@ h1.brand-title{
 .overlay{position:fixed;inset:0;background:rgba(3,12,28,0.72);backdrop-filter:blur(2px);display:flex;align-items:flex-start;justify-content:center;padding:24px 12px;overflow-y:auto;z-index:50;}
 .modal-card{background:linear-gradient(180deg, rgba(15,45,86,0.98), rgba(6,24,50,0.98));border:1px solid var(--panel-border);border-radius:20px;max-width:640px;width:100%;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,0.5);}
 .modal-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px;}
-.modal-head h2{margin:0;font-size:22px;font-weight:800;color:#fff;}
+.modal-head h2{margin:0;font-size:22px;font-weight:800;color:#fff;display:flex;align-items:center;gap:8px;}
 .icon-btn{background:rgba(255,255,255,0.1);border:1px solid var(--panel-border);color:#fff;border-radius:10px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;}
 .icon-btn:hover{background:rgba(255,255,255,0.2);}
 
@@ -153,6 +155,15 @@ h1.brand-title{
 (function(){
 'use strict';
 var SHIELD_ICON = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M12 2l7 2.6v5.6c0 5-3 8.7-7 11-4-2.3-7-6-7-11V4.6L12 2z" fill="currentColor"/></svg>';
+var DIFF_COLORS = {easy:'#4be89a', medium:'#F9B41A', hard:'#ef5b5b'};
+var DIFF_LABELS = {easy:'Easy', medium:'Medium', hard:'Hard'};
+function diffIcon(diff){
+  if (!diff || !DIFF_COLORS[diff]) return '';
+  var label = DIFF_LABELS[diff] + ' base';
+  return '<span class="diff-icon" style="color:' + DIFF_COLORS[diff] + '" title="' + label + '" aria-label="' + label + '">' +
+    '<svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M12 2l6 7-6 13-6-13 6-7z" fill="currentColor"/></svg>' +
+  '</span>';
+}
 
 var players = [];
 var searchInput = document.getElementById('search-input');
@@ -220,7 +231,7 @@ function renderList(){
     card.innerHTML =
       '<div class="pc-thumb">' + thumbHtml + '</div>' +
       '<div class="pc-body">' +
-        '<div class="pc-name">' + escapeHtml(p.username) + '</div>' +
+        '<div class="pc-name"><span>' + escapeHtml(p.username) + '</span>' + diffIcon(p.difficulty) + '</div>' +
         '<div class="pc-kp">' + SHIELD_ICON + '<span>' + kp + '</span></div>' +
         '<span class="badge ' + badgeClass + '">' + badgeText + '</span>' +
       '</div>';
@@ -238,7 +249,7 @@ function openDetail(id){
   var p = findPlayer(id);
   if (!p) return;
   detailOverlay.setAttribute('data-id', id);
-  detailUsername.textContent = p.username;
+  detailUsername.innerHTML = '<span>' + escapeHtml(p.username) + '</span>' + diffIcon(p.difficulty);
   detailKpValue.textContent = (p.kingdomPower==null || p.kingdomPower==='') ? String.fromCharCode(8212) : p.kingdomPower;
   var valid = isValidBase(p);
   detailBadge.className = 'badge ' + (valid ? 'valid' : 'novalid');
