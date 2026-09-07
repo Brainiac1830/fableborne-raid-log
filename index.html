@@ -83,8 +83,11 @@ h1.brand-title{
 .pc-noimg{color:var(--gray-1);font-size:12px;font-weight:600;}
 .pc-body{padding:10px 12px 12px;display:flex;flex-direction:column;gap:6px;}
 .pc-name{font-weight:700;font-size:16px;color:#fff;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
-.pc-name span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
-.diff-icon{display:inline-flex;flex:none;}
+.pc-name-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+.diff-badge{display:inline-flex;align-items:center;font-size:11px;font-weight:800;padding:2px 8px;border-radius:999px;letter-spacing:0.3px;flex:none;}
+.diff-badge-easy{background:linear-gradient(180deg,#7cf0b2,#4be89a);color:#06301c;}
+.diff-badge-medium{background:linear-gradient(180deg,var(--gold-1),var(--gold-2));color:#4a2600;}
+.diff-badge-hard{background:linear-gradient(180deg,#ff8f8f,#ef5b5b);color:#3d0a0a;}
 .pc-kp{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:700;font-size:13px;color:var(--gold-1);}
 .pc-kp svg{color:var(--gold-2);}
 
@@ -364,14 +367,10 @@ const SEED_PLAYERS = [
 ];
 
 const SHIELD_ICON = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M12 2l7 2.6v5.6c0 5-3 8.7-7 11-4-2.3-7-6-7-11V4.6L12 2z" fill="currentColor"/></svg>';
-const DIFF_COLORS = {easy:'#4be89a', medium:'#F9B41A', hard:'#ef5b5b'};
 const DIFF_LABELS = {easy:'Easy', medium:'Medium', hard:'Hard'};
 function diffIcon(diff){
-  if (!diff || !DIFF_COLORS[diff]) return '';
-  var label = DIFF_LABELS[diff] + ' base';
-  return '<span class="diff-icon" style="color:' + DIFF_COLORS[diff] + '" title="' + label + '" aria-label="' + label + '">' +
-    '<svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M12 2l6 7-6 13-6-13 6-7z" fill="currentColor"/></svg>' +
-  '</span>';
+  if (!diff || !DIFF_LABELS[diff]) return '';
+  return '<span class="diff-badge diff-badge-' + diff + '">' + DIFF_LABELS[diff] + '</span>';
 }
 
 const BOSSES = [
@@ -584,7 +583,7 @@ function renderList(){
     card.innerHTML =
       '<div class="pc-thumb">' + thumbHtml + '</div>' +
       '<div class="pc-body">' +
-        '<div class="pc-name"><span>' + escapeHtml(p.username) + '</span>' + diffIcon(p.difficulty) + (miscHtml ? '<span class="boss-row-sm">' + miscHtml + '</span>' : '') + '</div>' +
+        '<div class="pc-name"><span class="pc-name-text">' + escapeHtml(p.username) + '</span>' + diffIcon(p.difficulty) + (miscHtml ? '<span class="boss-row-sm">' + miscHtml + '</span>' : '') + '</div>' +
         '<div class="pc-kp">' + SHIELD_ICON + '<span>' + kp + '</span>' + (bossHtml ? '<span class="boss-row-sm">' + bossHtml + '</span>' : '') + '</div>' +
       '</div>';
     card.addEventListener('click', function(){ openDetail(p.id); });
