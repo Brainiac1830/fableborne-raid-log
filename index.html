@@ -82,7 +82,7 @@ h1.brand-title{
 .pc-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
 .pc-noimg{color:var(--gray-1);font-size:12px;font-weight:600;}
 .pc-body{padding:10px 12px 12px;display:flex;flex-direction:column;gap:6px;}
-.pc-name{font-weight:700;font-size:16px;color:#fff;display:flex;align-items:center;gap:6px;}
+.pc-name{font-weight:700;font-size:16px;color:#fff;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
 .pc-name span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
 .diff-icon{display:inline-flex;flex:none;}
 .pc-kp{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:700;font-size:13px;color:var(--gold-1);}
@@ -113,6 +113,7 @@ h1.brand-title{
 .boss-icon img{width:100%;height:100%;object-fit:cover;display:block;}
 .boss-row-sm{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
 .boss-icon-sm{width:40px;height:40px;border-radius:10px;}
+.boss-icon-xs{width:20px;height:20px;border-radius:5px;}
 .icon-checkbox-grid{display:flex;flex-wrap:wrap;gap:12px;}
 .icon-checkbox-grid .icon-checkbox-item{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;font-size:11px;font-weight:700;color:var(--blue-mid);}
 .icon-checkbox-grid .icon-checkbox-item input{position:absolute;opacity:0;width:0;height:0;}
@@ -389,7 +390,7 @@ function bossIconsSmallHtml(bosses){
 function miscSmallHtml(p){
   var html = '';
   if (p.longLayout) html += '<span class="long-badge">Long</span>';
-  if (p.maxSingers) html += '<span class="boss-icon boss-icon-sm" title="Max Singers"><img src="images/icons/singer.png" alt="Max Singers"></span>';
+  if (p.maxSingers) html += '<span class="boss-icon boss-icon-xs" title="Max Singers"><img src="images/icons/singer.png" alt="Max Singers"></span>';
   return html;
 }
 function renderDetailMisc(container, p){
@@ -578,12 +579,13 @@ function renderList(){
       ? '<img src="' + escapeHtml(p.screenshot) + '" alt="" loading="lazy">'
       : '<div class="pc-noimg">No Image</div>';
     var kp = (p.kingdomPower==null || p.kingdomPower==='') ? String.fromCharCode(8212) : p.kingdomPower;
-    var extrasHtml = bossIconsSmallHtml(p.bosses) + miscSmallHtml(p);
+    var bossHtml = bossIconsSmallHtml(p.bosses);
+    var miscHtml = miscSmallHtml(p);
     card.innerHTML =
       '<div class="pc-thumb">' + thumbHtml + '</div>' +
       '<div class="pc-body">' +
-        '<div class="pc-name"><span>' + escapeHtml(p.username) + '</span>' + diffIcon(p.difficulty) + '</div>' +
-        '<div class="pc-kp">' + SHIELD_ICON + '<span>' + kp + '</span>' + (extrasHtml ? '<span class="boss-row-sm">' + extrasHtml + '</span>' : '') + '</div>' +
+        '<div class="pc-name"><span>' + escapeHtml(p.username) + '</span>' + diffIcon(p.difficulty) + (miscHtml ? '<span class="boss-row-sm">' + miscHtml + '</span>' : '') + '</div>' +
+        '<div class="pc-kp">' + SHIELD_ICON + '<span>' + kp + '</span>' + (bossHtml ? '<span class="boss-row-sm">' + bossHtml + '</span>' : '') + '</div>' +
       '</div>';
     card.addEventListener('click', function(){ openDetail(p.id); });
     resultsList.appendChild(card);
