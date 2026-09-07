@@ -12,7 +12,6 @@
 :root{
   --gold-1:#FFDC30; --gold-2:#F9B41A; --gold-3:#E97500;
   --blue-light:#e1f6ff; --blue-mid:#b3cff2;
-  --green-1:#4be89a; --green-2:#1ea866;
   --gray-1:#aab7cf;
   --panel: rgba(6,26,54,0.6);
   --panel-border: rgba(255,255,255,0.18);
@@ -52,9 +51,7 @@ h1.brand-title{
 #search-input{flex:1;background:transparent;border:none;outline:none;color:#fff;font-family:var(--font);font-size:16px;font-weight:600;}
 #search-input::placeholder{color:var(--blue-mid);opacity:0.8;}
 
-.toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
-.filter-chip{display:flex;align-items:center;gap:6px;font-weight:600;font-size:13px;color:var(--blue-light);opacity:0.9;user-select:none;cursor:pointer;}
-.filter-chip input{accent-color:var(--gold-2);width:16px;height:16px;}
+.toolbar{display:flex;justify-content:flex-end;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
 #results-count{font-weight:600;font-size:13px;color:var(--blue-mid);}
 
 #results-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;}
@@ -69,9 +66,6 @@ h1.brand-title{
 .diff-icon{display:inline-flex;flex:none;}
 .pc-kp{display:flex;align-items:center;gap:5px;font-weight:700;font-size:13px;color:var(--gold-1);}
 .pc-kp svg{color:var(--gold-2);}
-.badge{align-self:flex-start;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;letter-spacing:0.3px;}
-.badge.valid{background:linear-gradient(180deg,var(--green-1),var(--green-2));color:#06301c;}
-.badge.novalid{background:rgba(255,255,255,0.12);color:var(--gray-1);border:1px solid var(--panel-border);}
 
 #empty-state{text-align:center;padding:40px 20px;color:var(--blue-mid);font-weight:600;}
 
@@ -113,7 +107,6 @@ h1.brand-title{
     <input id="search-input" type="text" placeholder="Search player username...">
   </div>
   <div class="toolbar">
-    <label class="filter-chip"><input type="checkbox" id="filter-valid-only"> Raid Ready only</label>
     <span id="results-count"></span>
   </div>
   <div id="results-list"></div>
@@ -133,7 +126,6 @@ h1.brand-title{
         <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M12 2l7 2.6v5.6c0 5-3 8.7-7 11-4-2.3-7-6-7-11V4.6L12 2z" fill="currentColor"/></svg>
         <span id="detail-kp-value"></span>
       </div>
-      <span class="badge" id="detail-badge"></span>
     </div>
     <div class="media-block">
       <div class="media-label">Base Screenshot</div>
@@ -167,7 +159,6 @@ function diffIcon(diff){
 
 var players = [];
 var searchInput = document.getElementById('search-input');
-var filterValidOnly = document.getElementById('filter-valid-only');
 var resultsList = document.getElementById('results-list');
 var resultsCount = document.getElementById('results-count');
 var emptyState = document.getElementById('empty-state');
@@ -175,7 +166,6 @@ var emptyState = document.getElementById('empty-state');
 var detailOverlay = document.getElementById('detail-overlay');
 var detailUsername = document.getElementById('detail-username');
 var detailKpValue = document.getElementById('detail-kp-value');
-var detailBadge = document.getElementById('detail-badge');
 var detailScreenshotWrap = document.getElementById('detail-screenshot-wrap');
 var detailVideoWrap = document.getElementById('detail-video-wrap');
 var detailNotes = document.getElementById('detail-notes');
@@ -187,7 +177,6 @@ function escapeHtml(str){
     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s];
   });
 }
-function isValidBase(p){ return !!(p.screenshot || p.youtube); }
 function youtubeEmbedUrl(url){
   if(!url) return null;
   try{
@@ -207,9 +196,7 @@ function youtubeEmbedUrl(url){
 
 function renderList(){
   var q = searchInput.value.trim().toLowerCase();
-  var onlyValid = filterValidOnly.checked;
   var list = players.filter(function(p){ return p.username.toLowerCase().indexOf(q) !== -1; });
-  if (onlyValid) list = list.filter(isValidBase);
   list = list.slice().sort(function(a,b){
     var kd = (b.kingdomPower||0) - (a.kingdomPower||0);
     if (kd !== 0) return kd;
@@ -226,14 +213,11 @@ function renderList(){
       ? '<img src="' + escapeHtml(p.screenshot) + '" alt="" loading="lazy">'
       : '<div class="pc-noimg">No Image</div>';
     var kp = (p.kingdomPower==null || p.kingdomPower==='') ? String.fromCharCode(8212) : p.kingdomPower;
-    var badgeClass = isValidBase(p) ? 'valid' : 'novalid';
-    var badgeText = isValidBase(p) ? 'Raid Ready' : 'No Media';
     card.innerHTML =
       '<div class="pc-thumb">' + thumbHtml + '</div>' +
       '<div class="pc-body">' +
         '<div class="pc-name"><span>' + escapeHtml(p.username) + '</span>' + diffIcon(p.difficulty) + '</div>' +
         '<div class="pc-kp">' + SHIELD_ICON + '<span>' + kp + '</span></div>' +
-        '<span class="badge ' + badgeClass + '">' + badgeText + '</span>' +
       '</div>';
     card.addEventListener('click', function(){ openDetail(p.id); });
     resultsList.appendChild(card);
@@ -251,9 +235,6 @@ function openDetail(id){
   detailOverlay.setAttribute('data-id', id);
   detailUsername.innerHTML = '<span>' + escapeHtml(p.username) + '</span>' + diffIcon(p.difficulty);
   detailKpValue.textContent = (p.kingdomPower==null || p.kingdomPower==='') ? String.fromCharCode(8212) : p.kingdomPower;
-  var valid = isValidBase(p);
-  detailBadge.className = 'badge ' + (valid ? 'valid' : 'novalid');
-  detailBadge.textContent = valid ? 'Raid Ready' : 'No Media';
 
   detailScreenshotWrap.innerHTML = p.screenshot
     ? '<div class="screenshot-frame"><img src="' + escapeHtml(p.screenshot) + '" alt="' + escapeHtml(p.username) + ' base"></div>'
@@ -274,7 +255,6 @@ function closeDetail(){ detailOverlay.hidden = true; }
 detailCloseBtn.addEventListener('click', closeDetail);
 detailOverlay.addEventListener('click', function(e){ if (e.target === detailOverlay) closeDetail(); });
 searchInput.addEventListener('input', renderList);
-filterValidOnly.addEventListener('change', renderList);
 
 fetch('data.json', {cache:'no-store'})
   .then(function(r){ return r.json(); })
