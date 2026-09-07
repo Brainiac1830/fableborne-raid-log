@@ -813,20 +813,33 @@ googleSigninBtn.addEventListener('click', async function(){
   googleSigninBtn.disabled = false;
 });
 
-onAuthStateChanged(auth, function(user){ updateAuthUI(user); });
+let unsubscribePlayers = null;
 
-onSnapshot(playersCol, function(snapshot){
-  players = snapshot.docs.map(function(d){ return Object.assign({ id: d.id }, d.data()); });
-  renderList();
-  var openId = detailOverlay.getAttribute('data-id');
-  if (!detailOverlay.hidden && openId){
-    if (findPlayer(openId)) openDetail(openId);
-    else closeDetail();
+function subscribeToPlayers(){
+  if (unsubscribePlayers){ unsubscribePlayers(); unsubscribePlayers = null; }
+  unsubscribePlayers = onSnapshot(playersCol, function(snapshot){
+    players = snapshot.docs.map(function(d){ return Object.assign({ id: d.id }, d.data()); });
+    renderList();
+    var openId = detailOverlay.getAttribute('data-id');
+    if (!detailOverlay.hidden && openId){
+      if (findPlayer(openId)) openDetail(openId);
+      else closeDetail();
+    }
+  }, function(err){
+    resultsCount.textContent = '';
+    emptyState.hidden = false;
+    emptyState.textContent = 'Could not load the roster (' + err.code + ').';
+  });
+}
+
+onAuthStateChanged(auth, async function(user){
+  await updateAuthUI(user);
+  if (unsubscribePlayers){ unsubscribePlayers(); unsubscribePlayers = null; }
+  if (user){
+    subscribeToPlayers();
+  } else {
+    players = [];
   }
-}, function(err){
-  resultsCount.textContent = '';
-  emptyState.hidden = false;
-  emptyState.textContent = 'Could not load the roster (' + err.code + ').';
 });
 </script>
 </body>
