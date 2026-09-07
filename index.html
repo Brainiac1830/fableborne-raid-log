@@ -113,11 +113,17 @@ h1.brand-title{
 .boss-icon img{width:100%;height:100%;object-fit:cover;display:block;}
 .boss-row-sm{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
 .boss-icon-sm{width:40px;height:40px;border-radius:10px;}
-.boss-checkbox-grid{display:flex;flex-wrap:wrap;gap:12px;}
-.boss-checkbox-grid .boss-checkbox-item{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;font-size:11px;font-weight:700;color:var(--blue-mid);}
-.boss-checkbox-grid .boss-checkbox-item input{position:absolute;opacity:0;width:0;height:0;}
-.boss-checkbox-grid .boss-checkbox-item img{width:40px;height:40px;border-radius:8px;object-fit:cover;border:2px solid var(--panel-border);}
-.boss-checkbox-grid .boss-checkbox-item input:checked + img{border-color:var(--gold-2);box-shadow:0 0 0 2px rgba(249,180,26,0.35);}
+.icon-checkbox-grid{display:flex;flex-wrap:wrap;gap:12px;}
+.icon-checkbox-grid .icon-checkbox-item{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;font-size:11px;font-weight:700;color:var(--blue-mid);}
+.icon-checkbox-grid .icon-checkbox-item input{position:absolute;opacity:0;width:0;height:0;}
+.icon-checkbox-grid .icon-checkbox-item img{width:40px;height:40px;border-radius:8px;object-fit:cover;border:2px solid var(--panel-border);}
+.icon-checkbox-grid .icon-checkbox-item input:checked + img{border-color:var(--gold-2);box-shadow:0 0 0 2px rgba(249,180,26,0.35);}
+.field-row{display:flex;gap:20px;flex-wrap:wrap;}
+.field-row .field{flex:1;min-width:190px;}
+.misc-stack{display:flex;flex-direction:column;gap:12px;align-items:flex-start;}
+.plain-checkbox-item{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--blue-light);}
+.plain-checkbox-item input{width:17px;height:17px;accent-color:var(--gold-2);cursor:pointer;}
+.long-badge{display:inline-flex;align-items:center;font-size:11px;font-weight:800;color:#4a2600;background:linear-gradient(180deg,var(--gold-1),var(--gold-2));padding:2px 8px;border-radius:999px;letter-spacing:0.3px;}
 
 .media-block{margin-bottom:16px;}
 .media-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--blue-mid);margin-bottom:6px;}
@@ -206,6 +212,7 @@ h1.brand-title{
       </div>
     </div>
     <div class="boss-row" id="detail-bosses"></div>
+    <div class="boss-row" id="detail-misc"></div>
     <div class="media-block">
       <div class="media-label">Base Screenshot</div>
       <div id="detail-screenshot-wrap"></div>
@@ -247,9 +254,27 @@ h1.brand-title{
           <option value="hard">Hard</option>
         </select>
       </div>
-      <div class="field">
-        <label>Bosses Present</label>
-        <div class="boss-checkbox-grid" id="f-boss-grid"></div>
+      <div class="field-row">
+        <div class="field">
+          <label>Bosses Present</label>
+          <div class="icon-checkbox-grid" id="f-boss-grid"></div>
+        </div>
+        <div class="field">
+          <label>Misc</label>
+          <div class="misc-stack">
+            <label class="plain-checkbox-item">
+              <input type="checkbox" id="f-misc-long">
+              <span>Long Layout (no image)</span>
+            </label>
+            <div class="icon-checkbox-grid">
+              <label class="icon-checkbox-item">
+                <input type="checkbox" id="f-misc-maxsingers">
+                <img src="images/icons/singer.png" alt="Max Singers">
+                <span>Max Singers</span>
+              </label>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="field">
         <label>Base Screenshot</label>
@@ -361,6 +386,19 @@ function bossIconsSmallHtml(bosses){
     return '<span class="boss-icon boss-icon-sm" title="' + b.label + '"><img src="' + b.icon + '" alt="' + b.label + '"></span>';
   }).join('');
 }
+function miscSmallHtml(p){
+  var html = '';
+  if (p.longLayout) html += '<span class="long-badge">Long</span>';
+  if (p.maxSingers) html += '<span class="boss-icon boss-icon-sm" title="Max Singers"><img src="images/icons/singer.png" alt="Max Singers"></span>';
+  return html;
+}
+function renderDetailMisc(container, p){
+  var parts = [];
+  if (p.longLayout) parts.push('<div class="boss-chip"><span class="long-badge">Long</span></div>');
+  if (p.maxSingers) parts.push('<div class="boss-chip"><span class="boss-icon"><img src="images/icons/singer.png" alt="Max Singers"></span><span>Max Singers</span></div>');
+  container.innerHTML = parts.join('');
+  container.hidden = parts.length === 0;
+}
 function renderBossChips(container, bosses){
   var present = Array.isArray(bosses) ? bosses : [];
   container.innerHTML = BOSSES.map(function(b){
@@ -373,7 +411,7 @@ function renderBossChips(container, bosses){
 }
 function buildBossCheckboxGrid(container){
   container.innerHTML = BOSSES.map(function(b){
-    return '<label class="boss-checkbox-item" data-boss="' + b.id + '">' +
+    return '<label class="icon-checkbox-item" data-boss="' + b.id + '">' +
       '<input type="checkbox" value="' + b.id + '">' +
       '<img src="' + b.icon + '" alt="' + b.label + '">' +
       '<span>' + b.label + '</span>' +
@@ -413,6 +451,7 @@ const detailOverlay = document.getElementById('detail-overlay');
 const detailUsername = document.getElementById('detail-username');
 const detailKpValue = document.getElementById('detail-kp-value');
 const detailBosses = document.getElementById('detail-bosses');
+const detailMisc = document.getElementById('detail-misc');
 const detailScreenshotWrap = document.getElementById('detail-screenshot-wrap');
 const detailVideoWrap = document.getElementById('detail-video-wrap');
 const detailNotes = document.getElementById('detail-notes');
@@ -432,6 +471,8 @@ const fKp = document.getElementById('f-kp');
 const fDifficulty = document.getElementById('f-difficulty');
 const fBossGrid = document.getElementById('f-boss-grid');
 buildBossCheckboxGrid(fBossGrid);
+const fMiscLong = document.getElementById('f-misc-long');
+const fMiscMaxSingers = document.getElementById('f-misc-maxsingers');
 const fScreenshotUrl = document.getElementById('f-screenshot-url');
 const fScreenshotFile = document.getElementById('f-screenshot-file');
 const fScreenshotPreview = document.getElementById('f-screenshot-preview');
@@ -537,12 +578,12 @@ function renderList(){
       ? '<img src="' + escapeHtml(p.screenshot) + '" alt="" loading="lazy">'
       : '<div class="pc-noimg">No Image</div>';
     var kp = (p.kingdomPower==null || p.kingdomPower==='') ? String.fromCharCode(8212) : p.kingdomPower;
-    var bossHtml = bossIconsSmallHtml(p.bosses);
+    var extrasHtml = bossIconsSmallHtml(p.bosses) + miscSmallHtml(p);
     card.innerHTML =
       '<div class="pc-thumb">' + thumbHtml + '</div>' +
       '<div class="pc-body">' +
         '<div class="pc-name"><span>' + escapeHtml(p.username) + '</span>' + diffIcon(p.difficulty) + '</div>' +
-        '<div class="pc-kp">' + SHIELD_ICON + '<span>' + kp + '</span>' + (bossHtml ? '<span class="boss-row-sm">' + bossHtml + '</span>' : '') + '</div>' +
+        '<div class="pc-kp">' + SHIELD_ICON + '<span>' + kp + '</span>' + (extrasHtml ? '<span class="boss-row-sm">' + extrasHtml + '</span>' : '') + '</div>' +
       '</div>';
     card.addEventListener('click', function(){ openDetail(p.id); });
     resultsList.appendChild(card);
@@ -561,6 +602,7 @@ function openDetail(id){
   detailUsername.innerHTML = '<span>' + escapeHtml(p.username) + '</span>' + diffIcon(p.difficulty);
   detailKpValue.textContent = (p.kingdomPower==null || p.kingdomPower==='') ? String.fromCharCode(8212) : p.kingdomPower;
   renderBossChips(detailBosses, p.bosses);
+  renderDetailMisc(detailMisc, p);
 
   detailScreenshotWrap.innerHTML = p.screenshot
     ? '<div class="screenshot-frame"><img src="' + escapeHtml(p.screenshot) + '" alt="' + escapeHtml(p.username) + ' base"></div>'
@@ -586,6 +628,8 @@ function resetEditorForm(){
   fKp.value = '';
   fDifficulty.value = '';
   setCheckedBosses(fBossGrid, []);
+  fMiscLong.checked = false;
+  fMiscMaxSingers.checked = false;
   fScreenshotUrl.value = '';
   fScreenshotFile.value = '';
   fScreenshotPreview.hidden = true;
@@ -611,6 +655,8 @@ function openEditEditor(id){
   fKp.value = (p.kingdomPower==null) ? '' : p.kingdomPower;
   fDifficulty.value = p.difficulty || '';
   setCheckedBosses(fBossGrid, p.bosses);
+  fMiscLong.checked = !!p.longLayout;
+  fMiscMaxSingers.checked = !!p.maxSingers;
   fScreenshotUrl.value = (p.screenshot && p.screenshot.indexOf('data:') !== 0) ? p.screenshot : '';
   if (p.screenshot){
     pendingScreenshotDataUrl = p.screenshot.indexOf('data:') === 0 ? p.screenshot : null;
@@ -690,6 +736,8 @@ fSaveBtn.addEventListener('click', async function(){
     kingdomPower: kpRaw === '' ? null : Number(kpRaw),
     difficulty: fDifficulty.value || null,
     bosses: getCheckedBosses(fBossGrid),
+    longLayout: fMiscLong.checked,
+    maxSingers: fMiscMaxSingers.checked,
     screenshot: screenshot,
     youtube: fYoutube.value.trim(),
     notes: fNotes.value,
