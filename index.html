@@ -63,6 +63,14 @@ h1.brand-title{
 .sort-toggle{display:flex;gap:6px;}
 .sort-toggle-btn{background:rgba(255,255,255,0.08);border:1px solid var(--panel-border);color:var(--blue-mid);font-family:inherit;font-weight:700;font-size:12px;padding:5px 12px;border-radius:999px;cursor:pointer;}
 .sort-toggle-btn.active{background:linear-gradient(180deg,var(--gold-1),var(--gold-2));color:#4a2600;border-color:transparent;}
+.compare-slots{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;}
+.compare-slot{flex:1;min-width:220px;}
+.compare-slot label{display:block;font-size:12px;font-weight:700;color:var(--blue-mid);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px;}
+.compare-slot input{width:100%;background:var(--panel);border:1px solid var(--panel-border);border-radius:12px;color:#fff;padding:9px 12px;font-family:var(--font);font-size:14px;font-weight:600;outline:none;box-sizing:border-box;}
+.compare-slot input:focus{border-color:var(--gold-2);}
+.compare-card-wrap{margin-top:10px;}
+.compare-card-wrap:empty::before{content:'No player selected';display:block;text-align:center;padding:24px 12px;color:var(--gray-1);font-weight:600;font-size:12.5px;background:rgba(0,0,0,0.15);border:1px dashed var(--panel-border);border-radius:14px;}
+.compare-card-wrap .player-card{width:100%;cursor:pointer;}
 #results-count{font-weight:600;font-size:13px;color:var(--blue-mid);}
 
 .btn{border:none;border-radius:12px;padding:10px 18px;font-weight:700;font-size:14px;color:#fff;cursor:pointer;text-shadow:0 1px 2px rgba(0,0,0,0.35);box-shadow:0 3px 0 rgba(0,0,0,0.35);}
@@ -196,12 +204,33 @@ h1.brand-title{
       <div class="sort-toggle" id="sort-toggle">
         <button type="button" class="sort-toggle-btn active" data-sort="alpha">A-Z</button>
         <button type="button" class="sort-toggle-btn" data-sort="difficulty">Easy &rarr; Hard</button>
+        <button type="button" class="sort-toggle-btn" id="compare-toggle-btn">Compare</button>
       </div>
       <span id="results-count"></span>
     </div>
     <div id="seed-row" hidden>
       <button type="button" class="btn btn-navy btn-sm" id="seed-btn">Seed initial roster (one-time)</button>
     </div>
+    <div id="compare-panel" hidden>
+      <div class="compare-slots">
+        <div class="compare-slot">
+          <label>Player 1</label>
+          <input type="text" class="compare-input" data-slot="1" list="player-names-list" placeholder="Type a username...">
+          <div class="compare-card-wrap" id="compare-card-1"></div>
+        </div>
+        <div class="compare-slot">
+          <label>Player 2</label>
+          <input type="text" class="compare-input" data-slot="2" list="player-names-list" placeholder="Type a username...">
+          <div class="compare-card-wrap" id="compare-card-2"></div>
+        </div>
+        <div class="compare-slot">
+          <label>Player 3</label>
+          <input type="text" class="compare-input" data-slot="3" list="player-names-list" placeholder="Type a username...">
+          <div class="compare-card-wrap" id="compare-card-3"></div>
+        </div>
+      </div>
+    </div>
+    <datalist id="player-names-list"></datalist>
     <div id="results-list"></div>
     <div id="empty-state" hidden>No players match your search yet.</div>
     <div class="fab-wrap" id="fab-wrap" hidden>
@@ -455,9 +484,15 @@ let editingId = null;
 let pendingScreenshotDataUrl = null;
 let toastTimer = null;
 let sortMode = 'alpha';
+let compareActive = false;
 
 const searchInput = document.getElementById('search-input');
-const sortToggleBtns = document.querySelectorAll('.sort-toggle-btn');
+const sortToggleBtns = document.querySelectorAll('.sort-toggle-btn[data-sort]');
+const compareToggleBtn = document.getElementById('compare-toggle-btn');
+const comparePanel = document.getElementById('compare-panel');
+const compareInputs = document.querySelectorAll('.compare-input');
+const searchWrap = document.querySelector('.search-wrap');
+const playerNamesList = document.getElementById('player-names-list');
 const resultsList = document.getElementById('results-list');
 const resultsCount = document.getElementById('results-count');
 const emptyState = document.getElementById('empty-state');
@@ -597,24 +632,45 @@ function renderList(){
   emptyState.hidden = list.length > 0;
   seedRow.hidden = !(isAdmin && players.length === 0);
   list.forEach(function(p){
-    var card = document.createElement('button');
-    card.type = 'button';
-    card.className = 'player-card';
-    var thumbHtml = p.screenshot
-      ? '<img src="' + escapeHtml(p.screenshot) + '" alt="" loading="lazy">'
-      : '<div class="pc-noimg">No Image</div>';
-    var kp = (p.kingdomPower==null || p.kingdomPower==='') ? String.fromCharCode(8212) : p.kingdomPower;
-    var bossHtml = bossIconsSmallHtml(p.bosses);
-    var miscHtml = miscSmallHtml(p);
-    card.innerHTML =
-      '<div class="pc-thumb">' + thumbHtml + '</div>' +
-      '<div class="pc-body">' +
-        '<div class="pc-name"><span class="pc-name-text">' + escapeHtml(p.username) + '</span>' + diffIcon(p.difficulty) + (miscHtml ? '<span class="boss-row-sm">' + miscHtml + '</span>' : '') + '</div>' +
-        '<div class="pc-kp">' + SHIELD_ICON + '<span>' + kp + '</span>' + (bossHtml ? '<span class="boss-row-sm">' + bossHtml + '</span>' : '') + '</div>' +
-      '</div>';
-    card.addEventListener('click', function(){ openDetail(p.id); });
-    resultsList.appendChild(card);
+    resultsList.appendChild(createPlayerCardEl(p));
   });
+}
+
+function createPlayerCardEl(p){
+  var card = document.createElement('button');
+  card.type = 'button';
+  card.className = 'player-card';
+  var thumbHtml = p.screenshot
+    ? '<img src="' + escapeHtml(p.screenshot) + '" alt="" loading="lazy">'
+    : '<div class="pc-noimg">No Image</div>';
+  var kp = (p.kingdomPower==null || p.kingdomPower==='') ? String.fromCharCode(8212) : p.kingdomPower;
+  var bossHtml = bossIconsSmallHtml(p.bosses);
+  var miscHtml = miscSmallHtml(p);
+  card.innerHTML =
+    '<div class="pc-thumb">' + thumbHtml + '</div>' +
+    '<div class="pc-body">' +
+      '<div class="pc-name"><span class="pc-name-text">' + escapeHtml(p.username) + '</span>' + diffIcon(p.difficulty) + (miscHtml ? '<span class="boss-row-sm">' + miscHtml + '</span>' : '') + '</div>' +
+      '<div class="pc-kp">' + SHIELD_ICON + '<span>' + kp + '</span>' + (bossHtml ? '<span class="boss-row-sm">' + bossHtml + '</span>' : '') + '</div>' +
+    '</div>';
+  card.addEventListener('click', function(){ openDetail(p.id); });
+  return card;
+}
+
+function updatePlayerDatalist(){
+  playerNamesList.innerHTML = players.map(function(p){
+    return '<option value="' + escapeHtml(p.username) + '">';
+  }).join('');
+}
+
+function updateCompareSlot(slotEl){
+  var idx = slotEl.getAttribute('data-slot');
+  var wrap = document.getElementById('compare-card-' + idx);
+  wrap.innerHTML = '';
+  var typed = slotEl.value.trim().toLowerCase();
+  if (!typed) return;
+  var p = players.find(function(pl){ return pl.username.toLowerCase() === typed; });
+  if (!p) return;
+  wrap.appendChild(createPlayerCardEl(p));
 }
 
 function findPlayer(id){
@@ -847,6 +903,24 @@ sortToggleBtns.forEach(function(btn){
     renderList();
   });
 });
+compareToggleBtn.addEventListener('click', function(){
+  compareActive = !compareActive;
+  compareToggleBtn.classList.toggle('active', compareActive);
+  comparePanel.hidden = !compareActive;
+  searchWrap.hidden = compareActive;
+  resultsList.hidden = compareActive;
+  if (compareActive){
+    emptyState.hidden = true;
+    seedRow.hidden = true;
+    resultsCount.hidden = true;
+  } else {
+    resultsCount.hidden = false;
+    renderList();
+  }
+});
+compareInputs.forEach(function(inp){
+  inp.addEventListener('input', function(){ updateCompareSlot(inp); });
+});
 signinOpenBtn.addEventListener('click', openLogin);
 loginCloseBtn.addEventListener('click', closeLogin);
 loginCancelBtn.addEventListener('click', closeLogin);
@@ -905,6 +979,8 @@ function subscribeToPlayers(){
   unsubscribePlayers = onSnapshot(playersCol, function(snapshot){
     players = snapshot.docs.map(function(d){ return Object.assign({ id: d.id }, d.data()); });
     renderList();
+    updatePlayerDatalist();
+    compareInputs.forEach(function(inp){ updateCompareSlot(inp); });
     var openId = detailOverlay.getAttribute('data-id');
     if (!detailOverlay.hidden && openId){
       if (findPlayer(openId)) openDetail(openId);
