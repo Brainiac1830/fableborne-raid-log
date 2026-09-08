@@ -59,7 +59,10 @@ h1.brand-title{
 #search-input{flex:1;background:transparent;border:none;outline:none;color:#fff;font-family:var(--font);font-size:16px;font-weight:600;}
 #search-input::placeholder{color:var(--blue-mid);opacity:0.8;}
 
-.toolbar{display:flex;justify-content:flex-end;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+.sort-toggle{display:flex;gap:6px;}
+.sort-toggle-btn{background:rgba(255,255,255,0.08);border:1px solid var(--panel-border);color:var(--blue-mid);font-family:inherit;font-weight:700;font-size:12px;padding:5px 12px;border-radius:999px;cursor:pointer;}
+.sort-toggle-btn.active{background:linear-gradient(180deg,var(--gold-1),var(--gold-2));color:#4a2600;border-color:transparent;}
 #results-count{font-weight:600;font-size:13px;color:var(--blue-mid);}
 
 .btn{border:none;border-radius:12px;padding:10px 18px;font-weight:700;font-size:14px;color:#fff;cursor:pointer;text-shadow:0 1px 2px rgba(0,0,0,0.35);box-shadow:0 3px 0 rgba(0,0,0,0.35);}
@@ -190,6 +193,10 @@ h1.brand-title{
       <input id="search-input" type="text" placeholder="Search player username...">
     </div>
     <div class="toolbar">
+      <div class="sort-toggle" id="sort-toggle">
+        <button type="button" class="sort-toggle-btn active" data-sort="alpha">A-Z</button>
+        <button type="button" class="sort-toggle-btn" data-sort="difficulty">Easy &rarr; Hard</button>
+      </div>
       <span id="results-count"></span>
     </div>
     <div id="seed-row" hidden>
@@ -378,6 +385,7 @@ function highLevelIconSvg(size){
   return '<svg viewBox="0 0 24 24" width="' + size + '" height="' + size + '" aria-hidden="true"><path d="M12 3l8 9h-5v9h-6v-9H4l8-9z" fill="#ef5b5b"/></svg>';
 }
 const DIFF_LABELS = {easy:'Easy', medium:'Medium', hard:'Hard'};
+const DIFF_ORDER = {easy:0, medium:1, hard:2};
 function diffIcon(diff){
   if (!diff || !DIFF_LABELS[diff]) return '';
   return '<span class="diff-badge diff-badge-' + diff + '">' + DIFF_LABELS[diff] + '</span>';
@@ -446,8 +454,10 @@ let isAdmin = false;
 let editingId = null;
 let pendingScreenshotDataUrl = null;
 let toastTimer = null;
+let sortMode = 'alpha';
 
 const searchInput = document.getElementById('search-input');
+const sortToggleBtns = document.querySelectorAll('.sort-toggle-btn');
 const resultsList = document.getElementById('results-list');
 const resultsCount = document.getElementById('results-count');
 const emptyState = document.getElementById('empty-state');
@@ -575,6 +585,11 @@ function renderList(){
   var q = searchInput.value.trim().toLowerCase();
   var list = players.filter(function(p){ return p.username.toLowerCase().indexOf(q) !== -1; });
   list = list.slice().sort(function(a,b){
+    if (sortMode === 'difficulty'){
+      var da = DIFF_ORDER.hasOwnProperty(a.difficulty) ? DIFF_ORDER[a.difficulty] : 99;
+      var db = DIFF_ORDER.hasOwnProperty(b.difficulty) ? DIFF_ORDER[b.difficulty] : 99;
+      if (da !== db) return da - db;
+    }
     return a.username.localeCompare(b.username, undefined, {sensitivity:'base'});
   });
   resultsCount.textContent = list.length + (list.length===1 ? ' base' : ' bases');
@@ -825,6 +840,13 @@ detailCloseBtn.addEventListener('click', closeDetail);
 detailOverlay.addEventListener('click', function(e){ if (e.target === detailOverlay) closeDetail(); });
 editorOverlay.addEventListener('click', function(e){ if (e.target === editorOverlay) closeEditor(); });
 searchInput.addEventListener('input', renderList);
+sortToggleBtns.forEach(function(btn){
+  btn.addEventListener('click', function(){
+    sortMode = btn.getAttribute('data-sort');
+    sortToggleBtns.forEach(function(b){ b.classList.toggle('active', b === btn); });
+    renderList();
+  });
+});
 signinOpenBtn.addEventListener('click', openLogin);
 loginCloseBtn.addEventListener('click', closeLogin);
 loginCancelBtn.addEventListener('click', closeLogin);
