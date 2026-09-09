@@ -89,7 +89,13 @@ h1.brand-title{
 #results-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;}
 .player-card{display:flex;flex-direction:column;text-align:left;background:var(--panel);border:1px solid var(--panel-border);border-radius:16px;padding:0;overflow:hidden;cursor:pointer;color:inherit;box-shadow:0 4px 0 rgba(0,0,0,0.25);font-family:inherit;}
 .player-card:hover{outline:2px solid var(--gold-2);}
-.pc-thumb{height:110px;background:rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.pc-thumb{position:relative;height:110px;background:rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.raid-btn{position:absolute;right:8px;bottom:8px;z-index:3;border:none;border-radius:999px;padding:5px 12px;font-family:var(--font);font-weight:800;font-size:12px;color:#4a2600;background:linear-gradient(180deg,var(--gold-1),var(--gold-2));box-shadow:0 2px 0 #8a4400;cursor:pointer;}
+.raid-btn:active{transform:translateY(1px);box-shadow:0 1px 0 #8a4400;}
+.raid-btn-lg{padding:9px 18px;font-size:14px;}
+.trophy-slider{width:100%;accent-color:var(--gold-2);margin:10px 0 6px;display:block;}
+.raid-checks{display:flex;flex-direction:column;gap:10px;}
+.raid-checks .plain-checkbox-item{display:flex;align-items:center;gap:8px;}
 .pc-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
 .pc-noimg{color:var(--gray-1);font-size:12px;font-weight:600;}
 .pc-body{padding:10px 12px 12px;display:flex;flex-direction:column;gap:6px;}
@@ -151,6 +157,7 @@ h1.brand-title{
 .long-badge{display:inline-flex;align-items:center;font-size:11px;font-weight:800;color:#4a2600;background:linear-gradient(180deg,var(--gold-1),var(--gold-2));padding:2px 8px;border-radius:999px;letter-spacing:0.3px;}
 
 .media-block{margin-bottom:16px;}
+#detail-screenshot-wrap{position:relative;}
 .media-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--blue-mid);margin-bottom:6px;}
 .screenshot-frame{border-radius:14px;overflow:hidden;border:1px solid var(--panel-border);background:rgba(0,0,0,0.25);}
 .screenshot-frame img{width:100%;display:block;}
@@ -415,6 +422,41 @@ h1.brand-title{
   </div>
 </div>
 
+<div class="overlay" id="raid-overlay" hidden>
+  <div class="modal-card" style="max-width:420px;">
+    <div class="modal-head">
+      <h2>Log a Raid</h2>
+      <button type="button" class="icon-btn" id="raid-close-btn">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg>
+      </button>
+    </div>
+    <div class="field-hint" style="margin-bottom:12px;">Raiding <strong id="raid-target-name"></strong></div>
+    <div class="form-error" id="raid-error" hidden></div>
+    <div class="field">
+      <label>How many trophies did you get?</label>
+      <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="raid-trophies-input" placeholder="0">
+      <input type="range" class="trophy-slider" id="raid-trophies-slider" min="0" max="2230" step="10" value="0">
+      <div class="field-hint" id="raid-trophies-pct">0% of max (0 / 2230)</div>
+    </div>
+    <div class="field">
+      <label>Raid Difficulty</label>
+      <div class="diff-radio-row">
+        <label class="diff-radio-item"><input type="radio" name="raid-difficulty" value="easy"><span class="diff-badge diff-badge-easy">Easy</span></label>
+        <label class="diff-radio-item"><input type="radio" name="raid-difficulty" value="medium"><span class="diff-badge diff-badge-medium">Medium</span></label>
+        <label class="diff-radio-item"><input type="radio" name="raid-difficulty" value="hard"><span class="diff-badge diff-badge-hard">Hard</span></label>
+      </div>
+    </div>
+    <div class="field raid-checks">
+      <label class="plain-checkbox-item"><input type="checkbox" id="raid-died"><span>Did you die?</span></label>
+      <label class="plain-checkbox-item"><input type="checkbox" id="raid-neardeath"><span>Near death experience</span></label>
+    </div>
+    <div class="form-actions">
+      <button type="button" class="btn btn-navy btn-sm" id="raid-cancel-btn">Cancel</button>
+      <button type="button" class="btn btn-gold btn-sm" id="raid-save-btn">Save</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast" hidden></div>
 
 <script type="module">
@@ -590,6 +632,20 @@ const profileName = document.getElementById('profile-name');
 const profileError = document.getElementById('profile-error');
 const profileRequiredIntro = document.getElementById('profile-required-intro');
 
+const raidOverlay = document.getElementById('raid-overlay');
+const raidCloseBtn = document.getElementById('raid-close-btn');
+const raidCancelBtn = document.getElementById('raid-cancel-btn');
+const raidSaveBtn = document.getElementById('raid-save-btn');
+const raidTargetName = document.getElementById('raid-target-name');
+const raidError = document.getElementById('raid-error');
+const raidTrophiesInput = document.getElementById('raid-trophies-input');
+const raidTrophiesSlider = document.getElementById('raid-trophies-slider');
+const raidTrophiesPct = document.getElementById('raid-trophies-pct');
+const raidDifficultyInputs = document.getElementsByName('raid-difficulty');
+const raidDiedInput = document.getElementById('raid-died');
+const raidNearDeathInput = document.getElementById('raid-neardeath');
+let raidTargetPlayerId = null;
+
 function escapeHtml(str){
   return String(str==null?'':str).replace(/[&<>"']/g, function(s){
     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s];
@@ -692,9 +748,10 @@ function renderList(){
 }
 
 function createPlayerCardEl(p){
-  var card = document.createElement('button');
-  card.type = 'button';
+  var card = document.createElement('div');
   card.className = 'player-card';
+  card.setAttribute('role', 'button');
+  card.setAttribute('tabindex', '0');
   var thumbHtml = p.screenshot
     ? '<img src="' + escapeHtml(p.screenshot) + '" alt="" loading="lazy">'
     : '<div class="pc-noimg">No Image</div>';
@@ -702,12 +759,19 @@ function createPlayerCardEl(p){
   var bossHtml = bossIconsSmallHtml(p.bosses);
   var miscHtml = miscSmallHtml(p);
   card.innerHTML =
-    '<div class="pc-thumb">' + thumbHtml + '</div>' +
+    '<div class="pc-thumb">' + thumbHtml + '<button type="button" class="raid-btn" title="Log a raid">Raid</button></div>' +
     '<div class="pc-body">' +
       '<div class="pc-name"><span class="pc-name-text">' + escapeHtml(p.username) + '</span>' + diffIcon(p.difficulty) + (miscHtml ? '<span class="boss-row-sm">' + miscHtml + '</span>' : '') + '</div>' +
       '<div class="pc-kp">' + SHIELD_ICON + '<span>' + kp + '</span>' + (bossHtml ? '<span class="boss-row-sm">' + bossHtml + '</span>' : '') + '</div>' +
     '</div>';
   card.addEventListener('click', function(){ openDetail(p.id); });
+  card.addEventListener('keydown', function(e){
+    if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openDetail(p.id); }
+  });
+  card.querySelector('.raid-btn').addEventListener('click', function(e){
+    e.stopPropagation();
+    openRaidModal(p.id);
+  });
   return card;
 }
 
@@ -742,9 +806,11 @@ function openDetail(id){
   renderBossChips(detailBosses, p.bosses);
   renderDetailMisc(detailMisc, p);
 
-  detailScreenshotWrap.innerHTML = p.screenshot
+  detailScreenshotWrap.innerHTML = (p.screenshot
     ? '<div class="screenshot-frame"><img src="' + escapeHtml(p.screenshot) + '" alt="' + escapeHtml(p.username) + ' base"></div>'
-    : '<div class="no-media">No screenshot available</div>';
+    : '<div class="no-media">No screenshot available</div>') +
+    '<button type="button" class="raid-btn raid-btn-lg" id="detail-raid-btn">Raid</button>';
+  document.getElementById('detail-raid-btn').addEventListener('click', function(){ openRaidModal(id); });
 
   var embed = youtubeEmbedUrl(p.youtube);
   detailVideoWrap.innerHTML = embed
@@ -853,6 +919,30 @@ function closeProfile(){
   if (profileRequired) return;
   profileOverlay.hidden = true;
 }
+
+function updateRaidTrophiesPct(){
+  var max = Number(raidTrophiesSlider.max) || 1;
+  var val = Number(raidTrophiesSlider.value) || 0;
+  var pct = Math.round((val / max) * 100);
+  raidTrophiesPct.textContent = pct + '% of max (' + val + ' / ' + max + ')';
+}
+function openRaidModal(playerId){
+  var p = findPlayer(playerId);
+  if (!p) return;
+  raidTargetPlayerId = playerId;
+  raidTargetName.textContent = p.username;
+  raidError.hidden = true;
+  var max = p.maxTrophies || 2230;
+  raidTrophiesSlider.max = max;
+  raidTrophiesSlider.value = 0;
+  raidTrophiesInput.value = '';
+  updateRaidTrophiesPct();
+  Array.prototype.forEach.call(raidDifficultyInputs, function(el){ el.checked = false; });
+  raidDiedInput.checked = false;
+  raidNearDeathInput.checked = false;
+  raidOverlay.hidden = false;
+}
+function closeRaidModal(){ raidOverlay.hidden = true; }
 
 function fileToCompressedDataUrl(file, maxDim, quality){
   return new Promise(function(resolve, reject){
@@ -1071,6 +1161,60 @@ profileSaveBtn.addEventListener('click', async function(){
     profileError.textContent = 'Could not save: ' + (err && err.message ? err.message : 'unknown error');
   }
   profileSaveBtn.disabled = false;
+});
+
+raidCloseBtn.addEventListener('click', closeRaidModal);
+raidCancelBtn.addEventListener('click', closeRaidModal);
+raidOverlay.addEventListener('click', function(e){ if (e.target === raidOverlay) closeRaidModal(); });
+
+raidTrophiesInput.addEventListener('input', function(){
+  var digits = raidTrophiesInput.value.replace(/[^0-9]/g, '').slice(0, 4);
+  var max = Number(raidTrophiesSlider.max) || 0;
+  if (digits === ''){
+    raidTrophiesInput.value = '';
+    raidTrophiesSlider.value = 0;
+  } else {
+    var val = Math.min(Number(digits), max);
+    raidTrophiesInput.value = String(val);
+    raidTrophiesSlider.value = val;
+  }
+  updateRaidTrophiesPct();
+});
+raidTrophiesSlider.addEventListener('input', function(){
+  raidTrophiesInput.value = raidTrophiesSlider.value;
+  updateRaidTrophiesPct();
+});
+
+raidSaveBtn.addEventListener('click', async function(){
+  raidError.hidden = true;
+  var trophies = raidTrophiesInput.value === '' ? null : Number(raidTrophiesInput.value);
+  if (trophies == null || isNaN(trophies)){ raidError.hidden = false; raidError.textContent = 'Enter how many trophies you got.'; return; }
+  var maxAllowed = Number(raidTrophiesSlider.max) || 0;
+  if (trophies > maxAllowed) trophies = maxAllowed;
+  var difficulty = null;
+  for (var i=0;i<raidDifficultyInputs.length;i++){
+    if (raidDifficultyInputs[i].checked) difficulty = raidDifficultyInputs[i].value;
+  }
+  if (!difficulty){ raidError.hidden = false; raidError.textContent = 'Pick a raid difficulty.'; return; }
+  raidSaveBtn.disabled = true;
+  try {
+    var raidsCol = collection(db, 'players', raidTargetPlayerId, 'raids');
+    await setDoc(doc(raidsCol), {
+      raidedByUid: currentUser.uid,
+      raidedByName: myDisplayName || currentUser.email,
+      trophiesGained: trophies,
+      difficulty: difficulty,
+      died: raidDiedInput.checked,
+      nearDeath: raidNearDeathInput.checked,
+      createdAt: new Date().toISOString().slice(0,10)
+    });
+    closeRaidModal();
+    showToast('Raid logged.');
+  } catch(err){
+    raidError.hidden = false;
+    raidError.textContent = 'Could not save: ' + (err && err.message ? err.message : 'unknown error');
+  }
+  raidSaveBtn.disabled = false;
 });
 
 let unsubscribePlayers = null;
