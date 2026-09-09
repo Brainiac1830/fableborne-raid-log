@@ -1395,7 +1395,7 @@ raidSaveBtn.addEventListener('click', async function(){
       difficulty: difficulty,
       hero: hero,
       outcome: outcome,
-      createdAt: new Date().toISOString().slice(0,10)
+      createdAt: new Date().toISOString()
     });
     closeRaidModal();
     showToast('Raid logged.');
