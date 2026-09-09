@@ -183,6 +183,14 @@ h1.brand-title{
 .thumb-preview img{width:100%;height:100%;object-fit:cover;}
 .form-error{color:#ffb3b3;font-weight:700;font-size:13px;margin-bottom:10px;}
 .form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:6px;flex-wrap:wrap;}
+.raid-history-wrap{overflow-x:auto;margin-top:6px;border:1px solid var(--panel-border);border-radius:12px;}
+.raid-history-table{width:100%;border-collapse:collapse;font-size:12.5px;}
+.raid-history-table th{text-align:left;padding:8px 10px;color:var(--blue-mid);font-weight:700;text-transform:uppercase;font-size:10px;letter-spacing:0.3px;border-bottom:1px solid var(--panel-border);white-space:nowrap;background:rgba(0,0,0,0.15);}
+.raid-history-table td{padding:7px 10px;border-bottom:1px solid rgba(255,255,255,0.06);white-space:nowrap;color:#fff;vertical-align:middle;}
+.raid-history-table tr:last-child td{border-bottom:none;}
+.raid-hist-icon{width:24px;height:24px;border-radius:6px;object-fit:cover;display:block;border:1px solid var(--panel-border);}
+.raid-hist-outcome{display:inline-flex;}
+#profile-raid-history-empty{padding:18px;text-align:center;color:var(--gray-1);font-weight:600;font-size:12.5px;}
 
 .gsi-btn{
   display:flex;align-items:center;justify-content:center;gap:10px;width:100%;
@@ -403,7 +411,7 @@ h1.brand-title{
 </div>
 
 <div class="overlay" id="profile-overlay" hidden>
-  <div class="modal-card" style="max-width:360px;">
+  <div class="modal-card">
     <div class="modal-head">
       <h2>Your Profile</h2>
       <button type="button" class="icon-btn" id="profile-close-btn">
@@ -420,6 +428,25 @@ h1.brand-title{
     <div class="form-actions">
       <button type="button" class="btn btn-navy btn-sm" id="profile-cancel-btn">Cancel</button>
       <button type="button" class="btn btn-gold btn-sm" id="profile-save-btn">Save</button>
+    </div>
+    <div class="field" style="margin-top:18px;">
+      <label>Your Raid History</label>
+      <div class="raid-history-wrap">
+        <table class="raid-history-table">
+          <thead>
+            <tr>
+              <th>Hero</th>
+              <th>Result</th>
+              <th>Base</th>
+              <th>Trophies</th>
+              <th>Difficulty</th>
+              <th>Completion</th>
+            </tr>
+          </thead>
+          <tbody id="profile-raid-history-body"></tbody>
+        </table>
+        <div id="profile-raid-history-empty" hidden>No raids logged yet.</div>
+      </div>
     </div>
   </div>
 </div>
@@ -489,7 +516,7 @@ import {
   getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
 import {
-  getFirestore, collection, doc, getDoc, onSnapshot, setDoc, updateDoc, deleteDoc
+  getFirestore, collection, collectionGroup, query, where, getDocs, doc, getDoc, onSnapshot, setDoc, updateDoc, deleteDoc
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -525,6 +552,18 @@ const BOSSES = [
   { id: 'blaster', label: 'Blaster', icon: 'images/icons/blaster.png' },
   { id: 'queen', label: 'Queen', icon: 'images/icons/queen.png' }
 ];
+const HEROES_MAP = {
+  shiver: { label: 'Shiver', icon: 'images/icons/shiver.png' },
+  shade: { label: 'Shade', icon: 'images/icons/shade_hero.png' },
+  rift: { label: 'Rift', icon: 'images/icons/rift.png' },
+  glint: { label: 'Glint', icon: 'images/icons/glint.png' },
+  ember: { label: 'Ember', icon: 'images/icons/ember.png' }
+};
+const OUTCOME_ICONS = {
+  good: { label: 'Good', color: '#4be89a', svg: '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 20.6 7.4 19.2 6z" fill="currentColor"/></svg>' },
+  closecall: { label: 'Close Call', color: '#F9B41A', svg: '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M12 2L1 21h22L12 2zm0 6.5l6.5 11h-13L12 8.5zM11 11v4h2v-4h-2zm0 5.5v2h2v-2h-2z" fill="currentColor"/></svg>' },
+  died: { label: 'Died', color: '#ef5b5b', svg: '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M12 2C6.9 2 3 5.9 3 11c0 3.1 1.6 5.7 4 7.4V20a1 1 0 0 0 1 1h1.5v-1.5h1v1.5h3v-1.5h1V21H17a1 1 0 0 0 1-1v-1.6c2.4-1.7 4-4.3 4-7.4 0-5.1-3.9-9-9-9zm-3.2 10.8a1.6 1.6 0 1 1 0-3.2 1.6 1.6 0 0 1 0 3.2zm6.4 0a1.6 1.6 0 1 1 0-3.2 1.6 1.6 0 0 1 0 3.2z" fill="currentColor"/></svg>' }
+};
 function bossIconsSmallHtml(bosses){
   var present = Array.isArray(bosses) ? bosses : [];
   return BOSSES.filter(function(b){ return present.indexOf(b.id) !== -1; }).map(function(b){
@@ -943,6 +982,53 @@ function openProfile(required){
   profileCloseBtn.hidden = profileRequired;
   profileCancelBtn.hidden = profileRequired;
   profileOverlay.hidden = false;
+  loadMyRaidHistory();
+}
+
+async function loadMyRaidHistory(){
+  var tbody = document.getElementById('profile-raid-history-body');
+  var emptyEl = document.getElementById('profile-raid-history-empty');
+  tbody.innerHTML = '';
+  emptyEl.hidden = false;
+  emptyEl.textContent = 'Loading...';
+  if (!currentUser) return;
+  try {
+    var q = query(collectionGroup(db, 'raids'), where('raidedByUid', '==', currentUser.uid));
+    var snap = await getDocs(q);
+    var rows = snap.docs.map(function(d){
+      var data = d.data();
+      var playerId = (d.ref.parent && d.ref.parent.parent) ? d.ref.parent.parent.id : null;
+      var row = {};
+      for (var k in data) row[k] = data[k];
+      row.playerId = playerId;
+      return row;
+    });
+    rows.sort(function(a,b){ return (b.createdAt || '').localeCompare(a.createdAt || ''); });
+    if (rows.length === 0){
+      emptyEl.hidden = false;
+      emptyEl.textContent = 'No raids logged yet.';
+      return;
+    }
+    emptyEl.hidden = true;
+    rows.forEach(function(r){
+      var p = findPlayer(r.playerId);
+      var heroInfo = HEROES_MAP[r.hero];
+      var outcomeInfo = OUTCOME_ICONS[r.outcome];
+      var pct = (r.maxTrophiesUsed && r.trophiesGained != null) ? Math.round((r.trophiesGained / r.maxTrophiesUsed) * 100) : null;
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>' + (heroInfo ? '<img class="raid-hist-icon" src="' + heroInfo.icon + '" alt="' + heroInfo.label + '" title="' + heroInfo.label + '">' : String.fromCharCode(8212)) + '</td>' +
+        '<td>' + (outcomeInfo ? '<span class="raid-hist-outcome" style="color:' + outcomeInfo.color + '" title="' + outcomeInfo.label + '">' + outcomeInfo.svg + '</span>' : String.fromCharCode(8212)) + '</td>' +
+        '<td>' + (p ? escapeHtml(p.username) : '(deleted)') + '</td>' +
+        '<td>' + (r.trophiesGained != null ? r.trophiesGained : String.fromCharCode(8212)) + ' / ' + (r.maxTrophiesUsed != null ? r.maxTrophiesUsed : String.fromCharCode(8212)) + '</td>' +
+        '<td>' + (p && p.difficulty ? diffIcon(p.difficulty) : String.fromCharCode(8212)) + '</td>' +
+        '<td>' + (pct != null ? pct + '%' : String.fromCharCode(8212)) + '</td>';
+      tbody.appendChild(tr);
+    });
+  } catch(err){
+    emptyEl.hidden = false;
+    emptyEl.textContent = 'Could not load raid history (' + (err.code || err.message) + ').';
+  }
 }
 function closeProfile(){
   if (profileRequired) return;
