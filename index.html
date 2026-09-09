@@ -124,7 +124,7 @@ h1.brand-title{
 .overlay{position:fixed;inset:0;background:rgba(3,12,28,0.72);backdrop-filter:blur(2px);display:flex;align-items:flex-start;justify-content:center;padding:24px 12px;overflow-y:auto;z-index:50;}
 .modal-card{background:linear-gradient(180deg, rgba(15,45,86,0.98), rgba(6,24,50,0.98));border:1px solid var(--panel-border);border-radius:20px;max-width:640px;width:100%;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,0.5);}
 .modal-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px;}
-.modal-head h2{margin:0;font-size:22px;font-weight:800;color:#fff;display:flex;align-items:center;gap:8px;}
+.modal-head h2{margin:0;font-size:22px;font-weight:800;color:#fff;display:flex;align-items:center;flex-wrap:wrap;gap:8px;}
 .icon-btn{background:rgba(255,255,255,0.1);border:1px solid var(--panel-border);color:#fff;border-radius:10px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;}
 .icon-btn:hover{background:rgba(255,255,255,0.2);}
 .modal-head-right{display:flex;align-items:center;gap:12px;flex:none;}
@@ -429,12 +429,11 @@ h1.brand-title{
 <div class="overlay" id="raid-overlay" hidden>
   <div class="modal-card" style="max-width:420px;">
     <div class="modal-head">
-      <h2>Log a Raid</h2>
+      <h2>Log a Raid on <span id="raid-target-name" style="color:var(--gold-1);"></span><span class="max-trophy-tag" id="raid-target-maxtrophy-tag" hidden></span></h2>
       <button type="button" class="icon-btn" id="raid-close-btn">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg>
       </button>
     </div>
-    <div class="field-hint" style="margin-bottom:12px;">Raiding <strong id="raid-target-name"></strong></div>
     <div class="form-error" id="raid-error" hidden></div>
     <div class="field" id="raid-maxtrophies-field" hidden>
       <label>This base's Maximum Trophies isn't set yet &mdash; pick it for this raid</label>
@@ -457,6 +456,16 @@ h1.brand-title{
         <label class="diff-radio-item"><input type="radio" name="raid-difficulty" value="easy"><span class="diff-badge diff-badge-easy">Easy</span></label>
         <label class="diff-radio-item"><input type="radio" name="raid-difficulty" value="medium"><span class="diff-badge diff-badge-medium">Medium</span></label>
         <label class="diff-radio-item"><input type="radio" name="raid-difficulty" value="hard"><span class="diff-badge diff-badge-hard">Hard</span></label>
+      </div>
+    </div>
+    <div class="field">
+      <label>Hero Used</label>
+      <div class="icon-checkbox-grid" id="raid-hero-grid">
+        <label class="icon-checkbox-item"><input type="radio" name="raid-hero" value="shiver"><img src="images/icons/shiver.png" alt="Shiver"><span>Shiver</span></label>
+        <label class="icon-checkbox-item"><input type="radio" name="raid-hero" value="shade"><img src="images/icons/shade_hero.png" alt="Shade"><span>Shade</span></label>
+        <label class="icon-checkbox-item"><input type="radio" name="raid-hero" value="rift"><img src="images/icons/rift.png" alt="Rift"><span>Rift</span></label>
+        <label class="icon-checkbox-item"><input type="radio" name="raid-hero" value="glint"><img src="images/icons/glint.png" alt="Glint"><span>Glint</span></label>
+        <label class="icon-checkbox-item"><input type="radio" name="raid-hero" value="ember"><img src="images/icons/ember.png" alt="Ember"><span>Ember</span></label>
       </div>
     </div>
     <div class="field raid-checks">
@@ -651,6 +660,7 @@ const raidCloseBtn = document.getElementById('raid-close-btn');
 const raidCancelBtn = document.getElementById('raid-cancel-btn');
 const raidSaveBtn = document.getElementById('raid-save-btn');
 const raidTargetName = document.getElementById('raid-target-name');
+const raidTargetMaxTrophyTag = document.getElementById('raid-target-maxtrophy-tag');
 const raidError = document.getElementById('raid-error');
 const raidTrophiesInput = document.getElementById('raid-trophies-input');
 const raidTrophiesSlider = document.getElementById('raid-trophies-slider');
@@ -658,6 +668,7 @@ const raidTrophiesPct = document.getElementById('raid-trophies-pct');
 const raidDifficultyInputs = document.getElementsByName('raid-difficulty');
 const raidDiedInput = document.getElementById('raid-died');
 const raidNearDeathInput = document.getElementById('raid-neardeath');
+const raidHeroInputs = document.getElementsByName('raid-hero');
 const raidMaxTrophiesField = document.getElementById('raid-maxtrophies-field');
 const raidMaxTrophiesInputs = document.getElementsByName('raid-maxtrophies');
 let raidTargetPlayerId = null;
@@ -949,6 +960,13 @@ function openRaidModal(playerId){
   raidTargetPlayerId = playerId;
   raidTargetHasMax = !!p.maxTrophies;
   raidTargetName.textContent = p.username;
+  if (p.maxTrophies){
+    raidTargetMaxTrophyTag.hidden = false;
+    raidTargetMaxTrophyTag.innerHTML = TROPHY_ICON + p.maxTrophies;
+  } else {
+    raidTargetMaxTrophyTag.hidden = true;
+    raidTargetMaxTrophyTag.innerHTML = '';
+  }
   raidError.hidden = true;
   raidMaxTrophiesField.hidden = raidTargetHasMax;
   Array.prototype.forEach.call(raidMaxTrophiesInputs, function(el){ el.checked = false; });
@@ -958,6 +976,7 @@ function openRaidModal(playerId){
   raidTrophiesInput.value = '';
   updateRaidTrophiesPct();
   Array.prototype.forEach.call(raidDifficultyInputs, function(el){ el.checked = false; });
+  Array.prototype.forEach.call(raidHeroInputs, function(el){ el.checked = false; });
   raidDiedInput.checked = false;
   raidNearDeathInput.checked = false;
   raidOverlay.hidden = false;
@@ -1236,6 +1255,11 @@ raidSaveBtn.addEventListener('click', async function(){
     if (raidDifficultyInputs[i].checked) difficulty = raidDifficultyInputs[i].value;
   }
   if (!difficulty){ raidError.hidden = false; raidError.textContent = 'Pick a raid difficulty.'; return; }
+  var hero = null;
+  for (var k=0;k<raidHeroInputs.length;k++){
+    if (raidHeroInputs[k].checked) hero = raidHeroInputs[k].value;
+  }
+  if (!hero){ raidError.hidden = false; raidError.textContent = 'Pick the hero you used.'; return; }
   raidSaveBtn.disabled = true;
   try {
     var raidsCol = collection(db, 'players', raidTargetPlayerId, 'raids');
@@ -1245,6 +1269,7 @@ raidSaveBtn.addEventListener('click', async function(){
       trophiesGained: trophies,
       maxTrophiesUsed: raidTargetHasMax ? maxAllowed : maxTrophiesUsed,
       difficulty: difficulty,
+      hero: hero,
       died: raidDiedInput.checked,
       nearDeath: raidNearDeathInput.checked,
       createdAt: new Date().toISOString().slice(0,10)
