@@ -103,7 +103,6 @@ h1.brand-title{
 .pc-kp svg{color:var(--gold-2);}
 
 #empty-state{text-align:center;padding:40px 20px;color:var(--blue-mid);font-weight:600;}
-#seed-row{text-align:center;margin-bottom:16px;}
 
 .fab-wrap{position:fixed;right:20px;bottom:20px;z-index:20;}
 
@@ -207,9 +206,6 @@ h1.brand-title{
         <button type="button" class="sort-toggle-btn" id="compare-toggle-btn">Compare</button>
       </div>
       <span id="results-count"></span>
-    </div>
-    <div id="seed-row" hidden>
-      <button type="button" class="btn btn-navy btn-sm" id="seed-btn">Seed initial roster (one-time)</button>
     </div>
     <div id="compare-panel" hidden>
       <div class="compare-slots">
@@ -402,13 +398,6 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const playersCol = collection(db, 'players');
 
-const SEED_PLAYERS = [
-  { id: 'petrosky', username: 'Petrosky', kingdomPower: 225, difficulty: 'medium', bosses: [], screenshot: 'images/petrosky.jpg', youtube: '', notes: '', updatedAt: '2026-09-07' },
-  { id: 'babrichi', username: 'Babrichi', kingdomPower: null, difficulty: 'medium', bosses: [], screenshot: '', youtube: 'https://youtu.be/72tbW5y6vzE', notes: '', updatedAt: '2026-09-07' },
-  { id: 'nihaly5', username: 'nihaly5', kingdomPower: 250, difficulty: 'easy', bosses: [], screenshot: '', youtube: 'https://youtu.be/QQ1npse0t5Q', notes: '', updatedAt: '2026-09-07' },
-  { id: 'herbetth', username: 'herbetth', kingdomPower: 225, difficulty: 'medium', bosses: [], screenshot: '', youtube: 'https://youtu.be/LqJiKrLVDK8', notes: '', updatedAt: '2026-09-07' }
-];
-
 const SHIELD_ICON = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M12 2l7 2.6v5.6c0 5-3 8.7-7 11-4-2.3-7-6-7-11V4.6L12 2z" fill="currentColor"/></svg>';
 function highLevelIconSvg(size){
   return '<svg viewBox="0 0 24 24" width="' + size + '" height="' + size + '" aria-hidden="true"><path d="M12 3l8 9h-5v9h-6v-9H4l8-9z" fill="#ef5b5b"/></svg>';
@@ -496,8 +485,6 @@ const playerNamesList = document.getElementById('player-names-list');
 const resultsList = document.getElementById('results-list');
 const resultsCount = document.getElementById('results-count');
 const emptyState = document.getElementById('empty-state');
-const seedRow = document.getElementById('seed-row');
-const seedBtn = document.getElementById('seed-btn');
 const fabWrap = document.getElementById('fab-wrap');
 const addPlayerBtn = document.getElementById('add-player-btn');
 const authBar = document.getElementById('auth-bar');
@@ -611,7 +598,6 @@ async function updateAuthUI(user){
     authBar.appendChild(btn2);
     openLogin();
   }
-  seedRow.hidden = !(isAdmin && players.length === 0);
   var openId = detailOverlay.getAttribute('data-id');
   if (!detailOverlay.hidden && openId) openDetail(openId);
 }
@@ -630,7 +616,6 @@ function renderList(){
   resultsCount.textContent = list.length + (list.length===1 ? ' base' : ' bases');
   resultsList.innerHTML = '';
   emptyState.hidden = list.length > 0;
-  seedRow.hidden = !(isAdmin && players.length === 0);
   list.forEach(function(p){
     resultsList.appendChild(createPlayerCardEl(p));
   });
@@ -875,20 +860,6 @@ detailDeleteBtn.addEventListener('click', async function(){
   }
 });
 
-seedBtn.addEventListener('click', async function(){
-  seedBtn.disabled = true;
-  try {
-    for (const p of SEED_PLAYERS){
-      const { id, ...data } = p;
-      await setDoc(doc(playersCol, id), data);
-    }
-    showToast('Roster seeded.');
-  } catch(err){
-    showToast('Could not seed roster: ' + (err && err.message ? err.message : ''));
-  }
-  seedBtn.disabled = false;
-});
-
 addPlayerBtn.addEventListener('click', openAddEditor);
 fCancelBtn.addEventListener('click', closeEditor);
 editorCloseBtn.addEventListener('click', closeEditor);
@@ -911,7 +882,6 @@ compareToggleBtn.addEventListener('click', function(){
   resultsList.hidden = compareActive;
   if (compareActive){
     emptyState.hidden = true;
-    seedRow.hidden = true;
     resultsCount.hidden = true;
   } else {
     resultsCount.hidden = false;
