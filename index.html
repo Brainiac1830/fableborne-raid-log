@@ -95,14 +95,12 @@ h1.brand-title{
 .raid-btn:active{transform:translateY(1px);box-shadow:0 1px 0 #8a4400;}
 .raid-btn-lg{padding:9px 18px;font-size:14px;}
 .trophy-slider{width:100%;accent-color:var(--gold-2);margin:10px 0 6px;display:block;}
-.raid-checks{display:flex;flex-direction:column;gap:10px;}
-.raid-checks .plain-checkbox-item{display:flex;align-items:center;gap:8px;}
 .pc-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
 .pc-noimg{color:var(--gray-1);font-size:12px;font-weight:600;}
 .pc-body{padding:10px 12px 12px;display:flex;flex-direction:column;gap:6px;}
 .pc-name{font-weight:700;font-size:16px;color:#fff;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
 .pc-name-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
-.diff-badge{display:inline-flex;align-items:center;font-size:11px;font-weight:800;padding:2px 8px;border-radius:999px;letter-spacing:0.3px;flex:none;}
+.diff-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:800;padding:2px 8px;border-radius:999px;letter-spacing:0.3px;flex:none;}
 .diff-badge-easy{background:linear-gradient(180deg,#7cf0b2,#4be89a);color:#06301c;}
 .diff-badge-medium{background:linear-gradient(180deg,var(--gold-1),var(--gold-2));color:#4a2600;}
 .diff-badge-hard{background:linear-gradient(180deg,#ff8f8f,#ef5b5b);color:#3d0a0a;}
@@ -468,9 +466,13 @@ h1.brand-title{
         <label class="icon-checkbox-item"><input type="radio" name="raid-hero" value="ember"><img src="images/icons/ember.png" alt="Ember"><span>Ember</span></label>
       </div>
     </div>
-    <div class="field raid-checks">
-      <label class="plain-checkbox-item"><input type="checkbox" id="raid-died"><span>Did you die?</span></label>
-      <label class="plain-checkbox-item"><input type="checkbox" id="raid-neardeath"><span>Near death experience</span></label>
+    <div class="field">
+      <label>How Did It Go?</label>
+      <div class="diff-radio-row">
+        <label class="diff-radio-item"><input type="radio" name="raid-outcome" value="good"><span class="diff-badge diff-badge-easy"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 20.6 7.4 19.2 6z" fill="currentColor"/></svg> Good</span></label>
+        <label class="diff-radio-item"><input type="radio" name="raid-outcome" value="closecall"><span class="diff-badge diff-badge-medium"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M12 2L1 21h22L12 2zm0 6.5l6.5 11h-13L12 8.5zM11 11v4h2v-4h-2zm0 5.5v2h2v-2h-2z" fill="currentColor"/></svg> Close Call</span></label>
+        <label class="diff-radio-item"><input type="radio" name="raid-outcome" value="died"><span class="diff-badge diff-badge-hard"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M12 2C6.9 2 3 5.9 3 11c0 3.1 1.6 5.7 4 7.4V20a1 1 0 0 0 1 1h1.5v-1.5h1v1.5h3v-1.5h1V21H17a1 1 0 0 0 1-1v-1.6c2.4-1.7 4-4.3 4-7.4 0-5.1-3.9-9-9-9zm-3.2 10.8a1.6 1.6 0 1 1 0-3.2 1.6 1.6 0 0 1 0 3.2zm6.4 0a1.6 1.6 0 1 1 0-3.2 1.6 1.6 0 0 1 0 3.2z" fill="currentColor"/></svg> Died</span></label>
+      </div>
     </div>
     <div class="form-actions">
       <button type="button" class="btn btn-navy btn-sm" id="raid-cancel-btn">Cancel</button>
@@ -666,8 +668,7 @@ const raidTrophiesInput = document.getElementById('raid-trophies-input');
 const raidTrophiesSlider = document.getElementById('raid-trophies-slider');
 const raidTrophiesPct = document.getElementById('raid-trophies-pct');
 const raidDifficultyInputs = document.getElementsByName('raid-difficulty');
-const raidDiedInput = document.getElementById('raid-died');
-const raidNearDeathInput = document.getElementById('raid-neardeath');
+const raidOutcomeInputs = document.getElementsByName('raid-outcome');
 const raidHeroInputs = document.getElementsByName('raid-hero');
 const raidMaxTrophiesField = document.getElementById('raid-maxtrophies-field');
 const raidMaxTrophiesInputs = document.getElementsByName('raid-maxtrophies');
@@ -977,8 +978,7 @@ function openRaidModal(playerId){
   updateRaidTrophiesPct();
   Array.prototype.forEach.call(raidDifficultyInputs, function(el){ el.checked = false; });
   Array.prototype.forEach.call(raidHeroInputs, function(el){ el.checked = false; });
-  raidDiedInput.checked = false;
-  raidNearDeathInput.checked = false;
+  Array.prototype.forEach.call(raidOutcomeInputs, function(el){ el.checked = false; });
   raidOverlay.hidden = false;
 }
 function closeRaidModal(){ raidOverlay.hidden = true; }
@@ -1260,6 +1260,11 @@ raidSaveBtn.addEventListener('click', async function(){
     if (raidHeroInputs[k].checked) hero = raidHeroInputs[k].value;
   }
   if (!hero){ raidError.hidden = false; raidError.textContent = 'Pick the hero you used.'; return; }
+  var outcome = null;
+  for (var m=0;m<raidOutcomeInputs.length;m++){
+    if (raidOutcomeInputs[m].checked) outcome = raidOutcomeInputs[m].value;
+  }
+  if (!outcome){ raidError.hidden = false; raidError.textContent = 'Pick how it went.'; return; }
   raidSaveBtn.disabled = true;
   try {
     var raidsCol = collection(db, 'players', raidTargetPlayerId, 'raids');
@@ -1270,8 +1275,7 @@ raidSaveBtn.addEventListener('click', async function(){
       maxTrophiesUsed: raidTargetHasMax ? maxAllowed : maxTrophiesUsed,
       difficulty: difficulty,
       hero: hero,
-      died: raidDiedInput.checked,
-      nearDeath: raidNearDeathInput.checked,
+      outcome: outcome,
       createdAt: new Date().toISOString().slice(0,10)
     });
     closeRaidModal();
