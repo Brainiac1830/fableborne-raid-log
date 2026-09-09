@@ -99,6 +99,12 @@ h1.brand-title{
 .diff-badge-easy{background:linear-gradient(180deg,#7cf0b2,#4be89a);color:#06301c;}
 .diff-badge-medium{background:linear-gradient(180deg,var(--gold-1),var(--gold-2));color:#4a2600;}
 .diff-badge-hard{background:linear-gradient(180deg,#ff8f8f,#ef5b5b);color:#3d0a0a;}
+.diff-badge-unset{background:rgba(255,255,255,0.12);color:var(--gray-1);border:1px solid var(--panel-border);}
+.diff-radio-row{display:flex;gap:10px;flex-wrap:wrap;}
+.diff-radio-item{cursor:pointer;display:inline-flex;}
+.diff-radio-item input{position:absolute;opacity:0;width:0;height:0;}
+.diff-radio-item .diff-badge{font-size:13px;padding:6px 14px;}
+.diff-radio-item input:checked + .diff-badge{box-shadow:0 0 0 2px #fff, 0 0 0 4px rgba(0,0,0,0.35);}
 .pc-kp{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:700;font-size:13px;color:var(--gold-1);}
 .pc-kp svg{color:var(--gold-2);}
 
@@ -297,13 +303,14 @@ h1.brand-title{
           <label class="radio-item"><input type="radio" name="f-maxtrophies" value="2230"><span>2230</span></label>
         </div>
       </div>
-      <div class="field"><label>Difficulty</label>
-        <select id="f-difficulty">
-          <option value="">Not set</option>
-          <option value="easy">Easy</option>
-          <option value="medium">Medium</option>
-          <option value="hard">Hard</option>
-        </select>
+      <div class="field">
+        <label>Base Difficulty</label>
+        <div class="diff-radio-row">
+          <label class="diff-radio-item"><input type="radio" name="f-difficulty" value=""><span class="diff-badge diff-badge-unset">Not set</span></label>
+          <label class="diff-radio-item"><input type="radio" name="f-difficulty" value="easy"><span class="diff-badge diff-badge-easy">Easy</span></label>
+          <label class="diff-radio-item"><input type="radio" name="f-difficulty" value="medium"><span class="diff-badge diff-badge-medium">Medium</span></label>
+          <label class="diff-radio-item"><input type="radio" name="f-difficulty" value="hard"><span class="diff-badge diff-badge-hard">Hard</span></label>
+        </div>
       </div>
       <div class="field-row">
         <div class="field">
@@ -550,7 +557,7 @@ const editorCloseBtn = document.getElementById('editor-close-btn');
 const fUsername = document.getElementById('f-username');
 const fKp = document.getElementById('f-kp');
 const fMaxTrophiesInputs = document.getElementsByName('f-maxtrophies');
-const fDifficulty = document.getElementById('f-difficulty');
+const fDifficultyInputs = document.getElementsByName('f-difficulty');
 const fBossGrid = document.getElementById('f-boss-grid');
 buildBossCheckboxGrid(fBossGrid);
 const fMiscLong = document.getElementById('f-misc-long');
@@ -765,11 +772,23 @@ function getMaxTrophies(){
   }
   return null;
 }
+function setDifficultyRadio(value){
+  var target = value || '';
+  Array.prototype.forEach.call(fDifficultyInputs, function(el){
+    el.checked = (el.value === target);
+  });
+}
+function getDifficultyRadio(){
+  for (var i=0;i<fDifficultyInputs.length;i++){
+    if (fDifficultyInputs[i].checked) return fDifficultyInputs[i].value || null;
+  }
+  return null;
+}
 function resetEditorForm(){
   fUsername.value = '';
   fKp.value = '';
   setMaxTrophies(null);
-  fDifficulty.value = '';
+  setDifficultyRadio(null);
   setCheckedBosses(fBossGrid, []);
   fMiscLong.checked = false;
   fMiscMaxSingers.checked = false;
@@ -798,7 +817,7 @@ function openEditEditor(id){
   fUsername.value = p.username;
   fKp.value = (p.kingdomPower==null) ? '' : p.kingdomPower;
   setMaxTrophies(p.maxTrophies);
-  fDifficulty.value = p.difficulty || '';
+  setDifficultyRadio(p.difficulty);
   setCheckedBosses(fBossGrid, p.bosses);
   fMiscLong.checked = !!p.longLayout;
   fMiscMaxSingers.checked = !!p.maxSingers;
@@ -896,7 +915,7 @@ fSaveBtn.addEventListener('click', async function(){
     username: username,
     kingdomPower: kpRaw === '' ? null : Number(kpRaw),
     maxTrophies: getMaxTrophies(),
-    difficulty: fDifficulty.value || null,
+    difficulty: getDifficultyRadio(),
     bosses: getCheckedBosses(fBossGrid),
     longLayout: fMiscLong.checked,
     maxSingers: fMiscMaxSingers.checked,
