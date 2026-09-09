@@ -190,7 +190,7 @@ h1.brand-title{
 .raid-history-table tr:last-child td{border-bottom:none;}
 .raid-hist-icon{width:24px;height:24px;border-radius:6px;object-fit:cover;display:block;border:1px solid var(--panel-border);}
 .raid-hist-outcome{display:inline-flex;}
-#profile-raid-history-empty{padding:18px;text-align:center;color:var(--gray-1);font-weight:600;font-size:12.5px;}
+#profile-raid-history-empty{padding:18px;text-align:center;color:var(--gray-1);font-weight:600;font-size:12.5px;word-break:break-word;}
 
 .gsi-btn{
   display:flex;align-items:center;justify-content:center;gap:10px;width:100%;
@@ -1026,8 +1026,16 @@ async function loadMyRaidHistory(){
       tbody.appendChild(tr);
     });
   } catch(err){
+    console.error('Raid history query failed:', err);
     emptyEl.hidden = false;
-    emptyEl.textContent = 'Could not load raid history (' + (err.code || err.message) + ').';
+    var msg = 'Could not load raid history' + (err && err.code ? ' (' + err.code + ')' : '') + ': ' + (err && err.message ? err.message : 'unknown error');
+    var urlMatch = msg.match(/https?:\/\/\S+/);
+    if (urlMatch){
+      var url = urlMatch[0].replace(/[.,]+$/, '');
+      emptyEl.innerHTML = escapeHtml(msg.slice(0, urlMatch.index)) + '<a href="' + url + '" target="_blank" rel="noopener" style="color:var(--gold-1);text-decoration:underline;">' + escapeHtml(url) + '</a>';
+    } else {
+      emptyEl.textContent = msg;
+    }
   }
 }
 function closeProfile(){
