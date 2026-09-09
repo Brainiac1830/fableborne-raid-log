@@ -125,14 +125,13 @@ h1.brand-title{
 .modal-head h2{margin:0;font-size:22px;font-weight:800;color:#fff;display:flex;align-items:center;flex-wrap:wrap;gap:8px;}
 .icon-btn{background:rgba(255,255,255,0.1);border:1px solid var(--panel-border);color:#fff;border-radius:10px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;}
 .icon-btn:hover{background:rgba(255,255,255,0.2);}
-.modal-head-right{display:flex;align-items:center;gap:12px;flex:none;}
+.modal-head-right{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:flex-end;}
 
 .detail-kp{display:flex;align-items:center;gap:6px;font-weight:800;font-size:16px;color:var(--gold-1);white-space:nowrap;}
 .detail-kp svg{color:var(--gold-2);}
 
 .boss-row{display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
 .boss-chip{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10.5px;font-weight:700;color:var(--blue-mid);}
-.boss-chip.boss-chip-absent{opacity:0.3;filter:grayscale(1);}
 .boss-icon{width:32px;height:32px;border-radius:8px;overflow:hidden;border:1px solid var(--panel-border);background:rgba(0,0,0,0.25);flex:none;display:flex;align-items:center;justify-content:center;}
 .boss-icon img{width:100%;height:100%;object-fit:cover;display:block;}
 .boss-row-sm{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
@@ -267,6 +266,7 @@ h1.brand-title{
     <div class="modal-head">
       <h2 id="detail-username"></h2>
       <div class="modal-head-right">
+        <div class="boss-row-sm" id="detail-boss-icons"></div>
         <div class="detail-kp">
           <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M12 2l7 2.6v5.6c0 5-3 8.7-7 11-4-2.3-7-6-7-11V4.6L12 2z" fill="currentColor"/></svg>
           <span id="detail-kp-value"></span>
@@ -276,12 +276,11 @@ h1.brand-title{
         </button>
       </div>
     </div>
-    <div class="boss-row" id="detail-bosses"></div>
-    <div class="boss-row" id="detail-misc"></div>
     <div class="media-block">
       <div class="media-label">Base Screenshot</div>
       <div id="detail-screenshot-wrap"></div>
     </div>
+    <div class="boss-row" id="detail-misc"></div>
     <div class="media-block">
       <div class="media-label">Notes</div>
       <textarea class="notes-box" id="detail-notes" readonly></textarea>
@@ -590,16 +589,6 @@ function renderDetailMisc(container, p){
   container.innerHTML = parts.join('');
   container.hidden = parts.length === 0;
 }
-function renderBossChips(container, bosses){
-  var present = Array.isArray(bosses) ? bosses : [];
-  container.innerHTML = BOSSES.map(function(b){
-    var has = present.indexOf(b.id) !== -1;
-    return '<div class="boss-chip' + (has ? '' : ' boss-chip-absent') + '">' +
-      '<span class="boss-icon"><img src="' + b.icon + '" alt="' + b.label + '"></span>' +
-      '<span>' + b.label + '</span>' +
-    '</div>';
-  }).join('');
-}
 function buildBossCheckboxGrid(container){
   container.innerHTML = BOSSES.map(function(b){
     return '<label class="icon-checkbox-item" data-boss="' + b.id + '">' +
@@ -649,7 +638,7 @@ const mainContent = document.getElementById('main-content');
 const detailOverlay = document.getElementById('detail-overlay');
 const detailUsername = document.getElementById('detail-username');
 const detailKpValue = document.getElementById('detail-kp-value');
-const detailBosses = document.getElementById('detail-bosses');
+const detailBossIcons = document.getElementById('detail-boss-icons');
 const detailMisc = document.getElementById('detail-misc');
 const detailScreenshotWrap = document.getElementById('detail-screenshot-wrap');
 const detailVideoWrap = document.getElementById('detail-video-wrap');
@@ -876,7 +865,7 @@ function openDetail(id){
   detailOverlay.setAttribute('data-id', id);
   detailUsername.innerHTML = '<span>' + escapeHtml(p.username) + '</span>' + diffIcon(p.difficulty);
   detailKpValue.textContent = (p.kingdomPower==null || p.kingdomPower==='') ? String.fromCharCode(8212) : p.kingdomPower;
-  renderBossChips(detailBosses, p.bosses);
+  detailBossIcons.innerHTML = bossIconsSmallHtml(p.bosses);
   renderDetailMisc(detailMisc, p);
 
   detailScreenshotWrap.innerHTML = (p.screenshot
