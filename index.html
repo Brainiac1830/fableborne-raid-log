@@ -191,6 +191,8 @@ h1.brand-title{
 .raid-hist-icon{width:24px;height:24px;border-radius:6px;object-fit:cover;display:block;border:1px solid var(--panel-border);}
 .raid-hist-outcome{display:inline-flex;}
 #profile-raid-history-empty{padding:18px;text-align:center;color:var(--gray-1);font-weight:600;font-size:12.5px;word-break:break-word;}
+.raid-hist-delete-btn{background:rgba(239,91,91,0.12);border:1px solid rgba(239,91,91,0.4);color:var(--red-1);border-radius:8px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.raid-hist-delete-btn:hover{background:rgba(239,91,91,0.28);}
 
 .gsi-btn{
   display:flex;align-items:center;justify-content:center;gap:10px;width:100%;
@@ -441,6 +443,7 @@ h1.brand-title{
               <th>Trophies</th>
               <th>Difficulty</th>
               <th>Completion</th>
+              <th></th>
             </tr>
           </thead>
           <tbody id="profile-raid-history-body"></tbody>
@@ -1003,6 +1006,7 @@ async function loadMyRaidHistory(){
       var row = {};
       for (var k in data) row[k] = data[k];
       row.playerId = playerId;
+      row.raidId = d.id;
       return row;
     });
     rows.sort(function(a,b){ return (b.createdAt || '').localeCompare(a.createdAt || ''); });
@@ -1024,7 +1028,8 @@ async function loadMyRaidHistory(){
         '<td>' + (p ? escapeHtml(p.username) : '(deleted)') + '</td>' +
         '<td>' + (r.trophiesGained != null ? r.trophiesGained : String.fromCharCode(8212)) + ' / ' + (r.maxTrophiesUsed != null ? r.maxTrophiesUsed : String.fromCharCode(8212)) + '</td>' +
         '<td>' + (p && p.difficulty ? diffIcon(p.difficulty) : String.fromCharCode(8212)) + '</td>' +
-        '<td>' + (pct != null ? pct + '%' : String.fromCharCode(8212)) + '</td>';
+        '<td>' + (pct != null ? pct + '%' : String.fromCharCode(8212)) + '</td>' +
+        '<td><button type="button" class="raid-hist-delete-btn" title="Delete this entry" data-player-id="' + escapeHtml(r.playerId || '') + '" data-raid-id="' + escapeHtml(r.raidId) + '"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M6 7h12l-1 13H7L6 7zm3-3h6l1 2H8l1-2zM9 10v7m6-7v7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg></button></td>';
       tbody.appendChild(tr);
     });
   } catch(err){
@@ -1296,6 +1301,24 @@ profileSaveBtn.addEventListener('click', async function(){
     profileError.textContent = 'Could not save: ' + (err && err.message ? err.message : 'unknown error');
   }
   profileSaveBtn.disabled = false;
+});
+
+document.getElementById('profile-raid-history-body').addEventListener('click', async function(e){
+  var btn = e.target.closest ? e.target.closest('.raid-hist-delete-btn') : null;
+  if (!btn) return;
+  var playerId = btn.getAttribute('data-player-id');
+  var raidId = btn.getAttribute('data-raid-id');
+  if (!playerId || !raidId) return;
+  if (!window.confirm('Delete this raid entry? This cannot be undone.')) return;
+  btn.disabled = true;
+  try {
+    await deleteDoc(doc(db, 'players', playerId, 'raids', raidId));
+    showToast('Raid entry deleted.');
+    loadMyRaidHistory();
+  } catch(err){
+    showToast('Could not delete: ' + (err && err.message ? err.message : 'unknown error'));
+    btn.disabled = false;
+  }
 });
 
 raidCloseBtn.addEventListener('click', closeRaidModal);
