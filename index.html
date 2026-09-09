@@ -381,6 +381,7 @@ h1.brand-title{
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg>
       </button>
     </div>
+    <div class="field-hint" id="profile-required-intro" hidden style="margin-bottom:10px;">Welcome! Pick an in-game name before continuing — it's shown whenever you add raid history to a player.</div>
     <div class="form-error" id="profile-error" hidden></div>
     <div class="field">
       <label>In-Game Name</label>
@@ -496,6 +497,7 @@ let toastTimer = null;
 let sortMode = 'alpha';
 let compareActive = false;
 let myDisplayName = '';
+let profileRequired = false;
 
 const searchInput = document.getElementById('search-input');
 const sortToggleBtns = document.querySelectorAll('.sort-toggle-btn[data-sort]');
@@ -565,6 +567,7 @@ const profileCancelBtn = document.getElementById('profile-cancel-btn');
 const profileSaveBtn = document.getElementById('profile-save-btn');
 const profileName = document.getElementById('profile-name');
 const profileError = document.getElementById('profile-error');
+const profileRequiredIntro = document.getElementById('profile-required-intro');
 
 function escapeHtml(str){
   return String(str==null?'':str).replace(/[&<>"']/g, function(s){
@@ -614,26 +617,34 @@ async function updateAuthUI(user){
     } catch(e){ myDisplayName = ''; }
   }
   fabWrap.hidden = !isAdmin;
-  mainContent.hidden = !user;
+  mainContent.hidden = !user || !myDisplayName;
   authBar.innerHTML = '';
   if (user){
     var span = document.createElement('span');
     span.textContent = 'Signed in as ' + (myDisplayName || user.email) + (isAdmin ? '' : ' (view only — not yet approved to edit)') + ' · ';
     var profileBtn = document.createElement('button');
     profileBtn.type = 'button'; profileBtn.className = 'link-btn'; profileBtn.textContent = 'Profile';
-    profileBtn.addEventListener('click', openProfile);
+    profileBtn.addEventListener('click', function(){ openProfile(false); });
     var sep = document.createTextNode(' · ');
     var btn = document.createElement('button');
     btn.type = 'button'; btn.className = 'link-btn'; btn.textContent = 'Sign Out';
     btn.addEventListener('click', function(){ signOut(auth); });
     authBar.appendChild(span); authBar.appendChild(profileBtn); authBar.appendChild(sep); authBar.appendChild(btn);
     closeLogin();
+    if (!myDisplayName){
+      openProfile(true);
+    } else {
+      profileRequired = false;
+      profileOverlay.hidden = true;
+    }
   } else {
     var btn2 = document.createElement('button');
     btn2.type = 'button'; btn2.className = 'link-btn'; btn2.id = 'signin-open-btn';
     btn2.textContent = 'Sign in';
     btn2.addEventListener('click', openLogin);
     authBar.appendChild(btn2);
+    profileRequired = false;
+    profileOverlay.hidden = true;
     openLogin();
   }
   var openId = detailOverlay.getAttribute('data-id');
@@ -783,12 +794,19 @@ function openLogin(){
 }
 function closeLogin(){ loginOverlay.hidden = true; }
 
-function openProfile(){
+function openProfile(required){
+  profileRequired = !!required;
   profileName.value = myDisplayName || '';
   profileError.hidden = true;
+  profileRequiredIntro.hidden = !profileRequired;
+  profileCloseBtn.hidden = profileRequired;
+  profileCancelBtn.hidden = profileRequired;
   profileOverlay.hidden = false;
 }
-function closeProfile(){ profileOverlay.hidden = true; }
+function closeProfile(){
+  if (profileRequired) return;
+  profileOverlay.hidden = true;
+}
 
 function fileToCompressedDataUrl(file, maxDim, quality){
   return new Promise(function(resolve, reject){
