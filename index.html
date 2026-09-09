@@ -516,7 +516,8 @@ import {
   getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
 import {
-  getFirestore, collection, collectionGroup, query, where, getDocs, doc, getDoc, onSnapshot, setDoc, updateDoc, deleteDoc
+  getFirestore, enableIndexedDbPersistence,
+  collection, collectionGroup, query, where, getDocs, doc, getDoc, onSnapshot, setDoc, updateDoc, deleteDoc
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -531,6 +532,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+enableIndexedDbPersistence(db).catch(function(){ /* multiple tabs open, or unsupported browser - falls back to memory-only cache */ });
 const playersCol = collection(db, 'players');
 
 const SHIELD_ICON = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M12 2l7 2.6v5.6c0 5-3 8.7-7 11-4-2.3-7-6-7-11V4.6L12 2z" fill="currentColor"/></svg>';
