@@ -139,6 +139,9 @@ h1.brand-title{
 .misc-stack{display:flex;flex-direction:column;gap:12px;align-items:flex-start;}
 .plain-checkbox-item{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--blue-light);}
 .plain-checkbox-item input{width:17px;height:17px;accent-color:var(--gold-2);cursor:pointer;}
+.radio-row{display:flex;gap:16px;flex-wrap:wrap;}
+.radio-item{display:flex;align-items:center;gap:7px;cursor:pointer;font-size:14px;font-weight:600;color:var(--blue-light);}
+.radio-item input{width:17px;height:17px;accent-color:var(--gold-2);cursor:pointer;}
 .long-badge{display:inline-flex;align-items:center;font-size:11px;font-weight:800;color:#4a2600;background:linear-gradient(180deg,var(--gold-1),var(--gold-2));padding:2px 8px;border-radius:999px;letter-spacing:0.3px;}
 
 .media-block{margin-bottom:16px;}
@@ -282,8 +285,18 @@ h1.brand-title{
     </div>
     <div class="form-error" id="f-error" hidden></div>
     <form id="editor-form">
-      <div class="field"><label>Username</label><input type="text" id="f-username" autocomplete="off"></div>
-      <div class="field"><label>Kingdom Power (trophies)</label><input type="number" id="f-kp" min="0" step="1"></div>
+      <div class="field-row">
+        <div class="field"><label>Username</label><input type="text" id="f-username" autocomplete="off"></div>
+        <div class="field"><label>Kingdom Power (trophies)</label><input type="number" id="f-kp" min="0" step="1"></div>
+      </div>
+      <div class="field">
+        <label>Maximum Trophies</label>
+        <div class="radio-row">
+          <label class="radio-item"><input type="radio" name="f-maxtrophies" value="1580"><span>1580</span></label>
+          <label class="radio-item"><input type="radio" name="f-maxtrophies" value="2080"><span>2080</span></label>
+          <label class="radio-item"><input type="radio" name="f-maxtrophies" value="2230"><span>2230</span></label>
+        </div>
+      </div>
       <div class="field"><label>Difficulty</label>
         <select id="f-difficulty">
           <option value="">Not set</option>
@@ -536,6 +549,7 @@ const editorTitle = document.getElementById('editor-title');
 const editorCloseBtn = document.getElementById('editor-close-btn');
 const fUsername = document.getElementById('f-username');
 const fKp = document.getElementById('f-kp');
+const fMaxTrophiesInputs = document.getElementsByName('f-maxtrophies');
 const fDifficulty = document.getElementById('f-difficulty');
 const fBossGrid = document.getElementById('f-boss-grid');
 buildBossCheckboxGrid(fBossGrid);
@@ -740,9 +754,21 @@ function openDetail(id){
 }
 function closeDetail(){ detailOverlay.hidden = true; detailOverlay.removeAttribute('data-id'); }
 
+function setMaxTrophies(value){
+  Array.prototype.forEach.call(fMaxTrophiesInputs, function(el){
+    el.checked = (value != null && String(value) === el.value);
+  });
+}
+function getMaxTrophies(){
+  for (var i=0;i<fMaxTrophiesInputs.length;i++){
+    if (fMaxTrophiesInputs[i].checked) return Number(fMaxTrophiesInputs[i].value);
+  }
+  return null;
+}
 function resetEditorForm(){
   fUsername.value = '';
   fKp.value = '';
+  setMaxTrophies(null);
   fDifficulty.value = '';
   setCheckedBosses(fBossGrid, []);
   fMiscLong.checked = false;
@@ -771,6 +797,7 @@ function openEditEditor(id){
   editorTitle.textContent = 'Edit Player';
   fUsername.value = p.username;
   fKp.value = (p.kingdomPower==null) ? '' : p.kingdomPower;
+  setMaxTrophies(p.maxTrophies);
   fDifficulty.value = p.difficulty || '';
   setCheckedBosses(fBossGrid, p.bosses);
   fMiscLong.checked = !!p.longLayout;
@@ -868,6 +895,7 @@ fSaveBtn.addEventListener('click', async function(){
   var newPlayer = {
     username: username,
     kingdomPower: kpRaw === '' ? null : Number(kpRaw),
+    maxTrophies: getMaxTrophies(),
     difficulty: fDifficulty.value || null,
     bosses: getCheckedBosses(fBossGrid),
     longLayout: fMiscLong.checked,
