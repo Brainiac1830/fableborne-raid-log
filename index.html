@@ -373,6 +373,27 @@ h1.brand-title{
   </div>
 </div>
 
+<div class="overlay" id="profile-overlay" hidden>
+  <div class="modal-card" style="max-width:360px;">
+    <div class="modal-head">
+      <h2>Your Profile</h2>
+      <button type="button" class="icon-btn" id="profile-close-btn">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg>
+      </button>
+    </div>
+    <div class="form-error" id="profile-error" hidden></div>
+    <div class="field">
+      <label>In-Game Name</label>
+      <input type="text" id="profile-name" maxlength="30" placeholder="e.g. Petrosky">
+      <div class="field-hint">Shown when you add raid history to a player later.</div>
+    </div>
+    <div class="form-actions">
+      <button type="button" class="btn btn-navy btn-sm" id="profile-cancel-btn">Cancel</button>
+      <button type="button" class="btn btn-gold btn-sm" id="profile-save-btn">Save</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast" hidden></div>
 
 <script type="module">
@@ -474,6 +495,7 @@ let pendingScreenshotDataUrl = null;
 let toastTimer = null;
 let sortMode = 'alpha';
 let compareActive = false;
+let myDisplayName = '';
 
 const searchInput = document.getElementById('search-input');
 const sortToggleBtns = document.querySelectorAll('.sort-toggle-btn[data-sort]');
@@ -537,6 +559,13 @@ const loginPassword = document.getElementById('login-password');
 const loginError = document.getElementById('login-error');
 const googleSigninBtn = document.getElementById('google-signin-btn');
 
+const profileOverlay = document.getElementById('profile-overlay');
+const profileCloseBtn = document.getElementById('profile-close-btn');
+const profileCancelBtn = document.getElementById('profile-cancel-btn');
+const profileSaveBtn = document.getElementById('profile-save-btn');
+const profileName = document.getElementById('profile-name');
+const profileError = document.getElementById('profile-error');
+
 function escapeHtml(str){
   return String(str==null?'':str).replace(/[&<>"']/g, function(s){
     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s];
@@ -572,23 +601,32 @@ function showToast(msg){
 async function updateAuthUI(user){
   currentUser = user;
   isAdmin = false;
+  myDisplayName = '';
   if (user){
     try {
       var adminsSnap = await getDoc(doc(db, 'config', 'admins'));
       var emails = (adminsSnap.exists() && Array.isArray(adminsSnap.data().emails)) ? adminsSnap.data().emails : [];
       isAdmin = emails.map(function(e){ return String(e).toLowerCase(); }).indexOf(user.email.toLowerCase()) !== -1;
     } catch(e){ isAdmin = false; }
+    try {
+      var profileSnap = await getDoc(doc(db, 'users', user.uid));
+      myDisplayName = (profileSnap.exists() && profileSnap.data().displayName) ? profileSnap.data().displayName : '';
+    } catch(e){ myDisplayName = ''; }
   }
   fabWrap.hidden = !isAdmin;
   mainContent.hidden = !user;
   authBar.innerHTML = '';
   if (user){
     var span = document.createElement('span');
-    span.textContent = 'Signed in as ' + user.email + (isAdmin ? '' : ' (view only — not yet approved to edit)') + ' · ';
+    span.textContent = 'Signed in as ' + (myDisplayName || user.email) + (isAdmin ? '' : ' (view only — not yet approved to edit)') + ' · ';
+    var profileBtn = document.createElement('button');
+    profileBtn.type = 'button'; profileBtn.className = 'link-btn'; profileBtn.textContent = 'Profile';
+    profileBtn.addEventListener('click', openProfile);
+    var sep = document.createTextNode(' · ');
     var btn = document.createElement('button');
     btn.type = 'button'; btn.className = 'link-btn'; btn.textContent = 'Sign Out';
     btn.addEventListener('click', function(){ signOut(auth); });
-    authBar.appendChild(span); authBar.appendChild(btn);
+    authBar.appendChild(span); authBar.appendChild(profileBtn); authBar.appendChild(sep); authBar.appendChild(btn);
     closeLogin();
   } else {
     var btn2 = document.createElement('button');
@@ -744,6 +782,13 @@ function openLogin(){
   loginOverlay.hidden = false;
 }
 function closeLogin(){ loginOverlay.hidden = true; }
+
+function openProfile(){
+  profileName.value = myDisplayName || '';
+  profileError.hidden = true;
+  profileOverlay.hidden = false;
+}
+function closeProfile(){ profileOverlay.hidden = true; }
 
 function fileToCompressedDataUrl(file, maxDim, quality){
   return new Promise(function(resolve, reject){
@@ -940,6 +985,27 @@ googleSigninBtn.addEventListener('click', async function(){
     loginError.textContent = 'Google sign-in failed or was cancelled.';
   }
   googleSigninBtn.disabled = false;
+});
+
+profileCloseBtn.addEventListener('click', closeProfile);
+profileCancelBtn.addEventListener('click', closeProfile);
+profileOverlay.addEventListener('click', function(e){ if (e.target === profileOverlay) closeProfile(); });
+profileSaveBtn.addEventListener('click', async function(){
+  var name = profileName.value.trim();
+  if (!name){ profileError.hidden = false; profileError.textContent = 'Enter a name.'; return; }
+  profileError.hidden = true;
+  profileSaveBtn.disabled = true;
+  try {
+    await setDoc(doc(db, 'users', currentUser.uid), { displayName: name, updatedAt: new Date().toISOString().slice(0,10) }, { merge: true });
+    myDisplayName = name;
+    updateAuthUI(currentUser);
+    closeProfile();
+    showToast('Profile saved.');
+  } catch(err){
+    profileError.hidden = false;
+    profileError.textContent = 'Could not save: ' + (err && err.message ? err.message : 'unknown error');
+  }
+  profileSaveBtn.disabled = false;
 });
 
 let unsubscribePlayers = null;
