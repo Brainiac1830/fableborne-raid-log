@@ -453,6 +453,31 @@ h1.brand-title{
   </div>
 </div>
 
+<div class="overlay" id="auditlog-overlay" hidden>
+  <div class="modal-card">
+    <div class="modal-head">
+      <h2>Audit Log</h2>
+      <button type="button" class="icon-btn" id="auditlog-close-btn">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg>
+      </button>
+    </div>
+    <div class="field-hint" style="margin-bottom:10px;">Base deletions only, most recent first. Visible to you only.</div>
+    <div class="raid-history-wrap">
+      <table class="raid-history-table">
+        <thead>
+          <tr>
+            <th>Base</th>
+            <th>Deleted By</th>
+            <th>When</th>
+          </tr>
+        </thead>
+        <tbody id="auditlog-body"></tbody>
+      </table>
+      <div id="auditlog-empty" hidden>No deletions logged yet.</div>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="raid-overlay" hidden>
   <div class="modal-card" style="max-width:420px;">
     <div class="modal-head">
@@ -536,6 +561,8 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 enableIndexedDbPersistence(db).catch(function(){ /* multiple tabs open, or unsupported browser - falls back to memory-only cache */ });
 const playersCol = collection(db, 'players');
+const auditLogCol = collection(db, 'auditLog');
+const OWNER_EMAIL = 'olivierbmimeault@gmail.com';
 
 const SHIELD_ICON = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M12 2l7 2.6v5.6c0 5-3 8.7-7 11-4-2.3-7-6-7-11V4.6L12 2z" fill="currentColor"/></svg>';
 const TROPHY_ICON = '<svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M6 3h12v2h2a1 1 0 0 1 1 1c0 3.2-2.1 5.6-4.6 6.1-.8 1.6-2.2 2.8-3.7 3.2V18h2.8a1 1 0 0 1 1 1v1a1 1 0 0 1-1 1H8.5a1 1 0 0 1-1-1v-1a1 1 0 0 1 1-1h2.8v-2.7c-1.5-.4-2.9-1.6-3.7-3.2C5.1 11.6 3 9.2 3 6a1 1 0 0 1 1-1h2V3zm0 4H5.1c.2 1.4 1 2.6 1.9 3.2V7zm12 0v3.2c.9-.6 1.7-1.8 1.9-3.2H18z" fill="currentColor"/></svg>';
@@ -611,6 +638,7 @@ function setCheckedBosses(container, bosses){
 let players = [];
 let currentUser = null;
 let isAdmin = false;
+let isOwner = false;
 let editingId = null;
 let pendingScreenshotDataUrl = null;
 let toastTimer = null;
@@ -743,8 +771,10 @@ function showToast(msg){
 async function updateAuthUI(user){
   currentUser = user;
   isAdmin = false;
+  isOwner = false;
   myDisplayName = '';
   if (user){
+    isOwner = !!(user.email && user.email.toLowerCase() === OWNER_EMAIL);
     try {
       var adminsSnap = await getDoc(doc(db, 'config', 'admins'));
       var emails = (adminsSnap.exists() && Array.isArray(adminsSnap.data().emails)) ? adminsSnap.data().emails : [];
@@ -764,11 +794,19 @@ async function updateAuthUI(user){
     var profileBtn = document.createElement('button');
     profileBtn.type = 'button'; profileBtn.className = 'link-btn'; profileBtn.textContent = 'Profile';
     profileBtn.addEventListener('click', function(){ openProfile(false); });
+    authBar.appendChild(span); authBar.appendChild(profileBtn);
+    if (isOwner){
+      var auditSep = document.createTextNode(' · ');
+      var auditBtn = document.createElement('button');
+      auditBtn.type = 'button'; auditBtn.className = 'link-btn'; auditBtn.textContent = 'Audit Log';
+      auditBtn.addEventListener('click', function(){ openAuditLog(); });
+      authBar.appendChild(auditSep); authBar.appendChild(auditBtn);
+    }
     var sep = document.createTextNode(' · ');
     var btn = document.createElement('button');
     btn.type = 'button'; btn.className = 'link-btn'; btn.textContent = 'Sign Out';
     btn.addEventListener('click', function(){ signOut(auth); });
-    authBar.appendChild(span); authBar.appendChild(profileBtn); authBar.appendChild(sep); authBar.appendChild(btn);
+    authBar.appendChild(sep); authBar.appendChild(btn);
     closeLogin();
     if (!myDisplayName){
       openProfile(true);
@@ -1034,6 +1072,45 @@ async function loadMyRaidHistory(){
     }
   }
 }
+
+function openAuditLog(){
+  document.getElementById('auditlog-overlay').hidden = false;
+  loadAuditLog();
+}
+function closeAuditLog(){ document.getElementById('auditlog-overlay').hidden = true; }
+
+async function loadAuditLog(){
+  var tbody = document.getElementById('auditlog-body');
+  var emptyEl = document.getElementById('auditlog-empty');
+  tbody.innerHTML = '';
+  emptyEl.hidden = false;
+  emptyEl.textContent = 'Loading...';
+  if (!isOwner) return;
+  try {
+    var snap = await getDocs(auditLogCol);
+    var rows = snap.docs.map(function(d){ return d.data(); });
+    rows.sort(function(a,b){ return (b.deletedAt || '').localeCompare(a.deletedAt || ''); });
+    if (rows.length === 0){
+      emptyEl.hidden = false;
+      emptyEl.textContent = 'No deletions logged yet.';
+      return;
+    }
+    emptyEl.hidden = true;
+    rows.forEach(function(r){
+      var tr = document.createElement('tr');
+      var when = r.deletedAt ? new Date(r.deletedAt).toLocaleString() : String.fromCharCode(8212);
+      tr.innerHTML =
+        '<td>' + escapeHtml(r.username || '(unknown)') + '</td>' +
+        '<td>' + escapeHtml(r.deletedByName || r.deletedByEmail || '(unknown)') + '</td>' +
+        '<td>' + escapeHtml(when) + '</td>';
+      tbody.appendChild(tr);
+    });
+  } catch(err){
+    console.error('Audit log query failed:', err);
+    emptyEl.hidden = false;
+    emptyEl.textContent = 'Could not load audit log' + (err && err.code ? ' (' + err.code + ')' : '') + '.';
+  }
+}
 function closeProfile(){
   if (profileRequired) return;
   profileOverlay.hidden = true;
@@ -1182,12 +1259,26 @@ detailDeleteBtn.addEventListener('click', async function(){
   if (!window.confirm('Delete ' + p.username + "'s entry? This cannot be undone.")) return;
   try {
     await deleteDoc(doc(playersCol, id));
+    try {
+      await setDoc(doc(auditLogCol), {
+        username: p.username,
+        playerId: id,
+        deletedByEmail: currentUser.email,
+        deletedByName: myDisplayName || currentUser.email,
+        deletedAt: new Date().toISOString()
+      });
+    } catch(auditErr){
+      console.error('Audit log write failed:', auditErr);
+    }
     showToast('Player removed.');
     closeDetail();
   } catch(err){
     showToast('Could not delete player.');
   }
 });
+
+document.getElementById('auditlog-close-btn').addEventListener('click', closeAuditLog);
+document.getElementById('auditlog-overlay').addEventListener('click', function(e){ if (e.target === document.getElementById('auditlog-overlay')) closeAuditLog(); });
 
 addPlayerBtn.addEventListener('click', openAddEditor);
 fCancelBtn.addEventListener('click', closeEditor);
