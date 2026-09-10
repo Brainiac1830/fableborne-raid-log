@@ -562,7 +562,7 @@ const db = getFirestore(app);
 enableIndexedDbPersistence(db).catch(function(){ /* multiple tabs open, or unsupported browser - falls back to memory-only cache */ });
 const playersCol = collection(db, 'players');
 const auditLogCol = collection(db, 'auditLog');
-const OWNER_EMAIL = 'olivierbmimeault@gmail.com';
+const OWNER_EMAIL = 'brainiaccryptostuff@gmail.com';
 
 const SHIELD_ICON = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M12 2l7 2.6v5.6c0 5-3 8.7-7 11-4-2.3-7-6-7-11V4.6L12 2z" fill="currentColor"/></svg>';
 const TROPHY_ICON = '<svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M6 3h12v2h2a1 1 0 0 1 1 1c0 3.2-2.1 5.6-4.6 6.1-.8 1.6-2.2 2.8-3.7 3.2V18h2.8a1 1 0 0 1 1 1v1a1 1 0 0 1-1 1H8.5a1 1 0 0 1-1-1v-1a1 1 0 0 1 1-1h2.8v-2.7c-1.5-.4-2.9-1.6-3.7-3.2C5.1 11.6 3 9.2 3 6a1 1 0 0 1 1-1h2V3zm0 4H5.1c.2 1.4 1 2.6 1.9 3.2V7zm12 0v3.2c.9-.6 1.7-1.8 1.9-3.2H18z" fill="currentColor"/></svg>';
